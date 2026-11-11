@@ -1,0 +1,32 @@
+# Runs the website + API with its own Postgres:  docker compose up --build
+# Set APP_URL to the public address (it is used in share links) and choose a real password.
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: metric
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-metric}
+      POSTGRES_DB: metric
+    volumes:
+      - metric-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U metric"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: ./web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://metric:${POSTGRES_PASSWORD:-metric}@db:5432/metric
+      APP_URL: ${APP_URL:-http://localhost:3000}
+    ports:
+      - "3000:3000"
+
+volumes:
+  metric-db:
