@@ -1,0 +1,67 @@
+name: iOS
+
+on:
+  push:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+  pull_request:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Test MetricCore en bouw iPhone- + Watch-app
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: MetricCore-tests
+        working-directory: ios/MetricCore
+        run: swift test
+
+      - name: XcodeGen installeren
+        run: brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
+
+      - name: Xcode-project genereren
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: App bouwen (iOS Simulator, inclusief Watch-app)
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Metric.xcodeproj \
+            -scheme Metric \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee build.log \
+            | xcbeautify
+
+      - name: Compileerfouten samenvatten
+        if: failure()
+        working-directory: ios
+        run: |
+          if [ -f build.log ]; then
+            echo "::group::Fouten"
+            grep -E "(error:|BUILD FAILED|The following build commands failed)" build.log | sort -u | head -n 200 || true
+            echo "::endgroup::"
+          fi

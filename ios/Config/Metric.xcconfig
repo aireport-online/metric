@@ -1,0 +1,13 @@
+// Instellingen die je per ontwikkelaar/omgeving wilt aanpassen.
+// Wordt door project.yml aan alle configuraties gekoppeld.
+
+// Bundle-id van de iPhone-app. De Watch-app krijgt automatisch `<id>.watchkitapp`.
+METRIC_BUNDLE_ID = com.example.metric
+
+// Standaard-server van het Metric-platform (zonder slash aan het eind).
+// Let op: `//` begint in een xcconfig een commentaar, vandaar `/$()/`.
+METRIC_API_BASE_URL = http:/$()/localhost:3000
+
+// Vul je Apple Developer Team-ID in om op een toestel te kunnen draaien,
+// of kies het team in Xcode onder Signing & Capabilities.
+// DEVELOPMENT_TEAM = ABCDE12345

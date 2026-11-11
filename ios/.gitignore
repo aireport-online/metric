@@ -1,0 +1,12 @@
+# Gegenereerd door XcodeGen (`xcodegen generate`)
+*.xcodeproj
+Metric/Info.plist
+MetricWatch/Info.plist
+
+# Xcode / SwiftPM
+xcuserdata/
+DerivedData/
+.build/
+.swiftpm/
+*.xcresult
+build.log
