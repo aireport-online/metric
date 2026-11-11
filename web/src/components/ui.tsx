@@ -1,20 +1,13 @@
 import type { ReactNode } from "react";
-import { initialOf, personHue } from "@/lib/format";
+import { initialOf } from "@/lib/format";
 
-/** A person: their initial on a pale tint of their own hue. Identity, not data. */
-export function Avatar({ username, name, size = 32 }: { username: string; name: string; size?: number }) {
-  const hue = personHue(username);
+/** A person: their initial as a lane number on a raised disc. Identity, not data. */
+export function Avatar({ name, size = 32 }: { username?: string; name: string; size?: number }) {
   return (
     <span
       aria-hidden
-      className="inline-flex flex-none items-center justify-center rounded-full font-medium"
-      style={{
-        width: size,
-        height: size,
-        fontSize: Math.max(11, Math.round(size * 0.42)),
-        background: `hsl(${hue} 55% 91%)`,
-        color: `hsl(${hue} 45% 24%)`,
-      }}
+      className="inline-flex flex-none items-center justify-center rounded-full bg-raised font-display font-bold text-ink"
+      style={{ width: size, height: size, fontSize: Math.max(13, Math.round(size * 0.5)), lineHeight: 1 }}
     >
       {initialOf(name)}
     </span>
@@ -23,10 +16,10 @@ export function Avatar({ username, name, size = 32 }: { username: string; name: 
 
 export function PageTitle({ title, sub, action }: { title: ReactNode; sub?: ReactNode; action?: ReactNode }) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 pb-6 pt-8 max-sm:pt-5">
+    <header className="rise flex flex-wrap items-end justify-between gap-x-6 gap-y-4 pb-6 pt-8 max-sm:pt-5">
       <div className="min-w-0">
-        <h1 className="text-[24px] font-bold leading-8 tracking-[-0.01em]">{title}</h1>
-        {sub ? <p className="mt-1 text-muted">{sub}</p> : null}
+        <h1 className="display text-[44px] leading-[1.05] max-sm:text-[34px]">{title}</h1>
+        {sub ? <p className="mt-1.5 text-muted">{sub}</p> : null}
       </div>
       {action ? <div className="flex max-w-full flex-wrap items-center gap-2">{action}</div> : null}
     </header>
@@ -49,21 +42,19 @@ export function Panel({
   return (
     <section className={`panel ${className}`}>
       {title ? (
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-5 pt-4">
-          <h2 className="whitespace-nowrap text-[16px] font-medium leading-6">{title}</h2>
-          {aside ? <div className="max-w-full flex-none text-muted">{aside}</div> : null}
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 px-6 pt-5 max-sm:px-5">
+          <h2 className="display whitespace-nowrap text-[24px] leading-[1.1]">{title}</h2>
+          {aside ? <div className="max-w-full flex-none text-[14px] text-muted">{aside}</div> : null}
         </div>
       ) : null}
-      <div className={flush ? "" : "p-5 pt-3"}>{children}</div>
+      <div className={flush ? "" : "p-6 pt-4 max-sm:p-5 max-sm:pt-4"}>{children}</div>
     </section>
   );
 }
 
-/** Keeps the frame of an empty block and says what will appear there. */
+/** Keeps the frame of an empty block and gives the first step. */
 export function Empty({ children }: { children: ReactNode }) {
-  return (
-    <p className="rounded-control border border-dashed border-control px-4 py-3 text-muted">{children}</p>
-  );
+  return <p className="rounded-control bg-raised px-4 py-3.5 text-muted">{children}</p>;
 }
 
 export function FormMessage({ state }: { state: { error?: string; ok?: boolean } | undefined }) {
@@ -77,15 +68,15 @@ export function FormMessage({ state }: { state: { error?: string; ok?: boolean }
   return null;
 }
 
-/** One figure with its label above and the unit as a smaller grey suffix. */
-export function Figure({ label, value, unit }: { label: string; value: ReactNode; unit?: string }) {
+/** One figure: the number in the display italic, its unit small beside it, the label underneath. */
+export function Figure({ label, value, unit, size = "md" }: { label: string; value: ReactNode; unit?: string; size?: "md" | "lg" }) {
   return (
     <div className="min-w-0">
-      <div className="text-[12px] leading-4 text-muted">{label}</div>
-      <div className="num mt-0.5 text-[16px] leading-6">
+      <div className={`figure whitespace-nowrap ${size === "lg" ? "text-[56px] max-sm:text-[40px]" : "text-[32px]"}`}>
         {value}
-        {unit ? <span className="ml-1 text-[12px] text-muted">{unit}</span> : null}
+        {unit ? <span className="figure-label ml-1 not-italic text-quiet">{unit}</span> : null}
       </div>
+      <div className="figure-label mt-1 text-muted">{label}</div>
     </div>
   );
 }

@@ -14,8 +14,7 @@ export default async function NewActivityPage() {
   return (
     <>
       <PageTitle title="Activiteit toevoegen" sub="Voor alles wat je zonder iPhone of Apple Watch deed." />
-      {/* 776 + 12 + 364 = 1152 */}
-      <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_364px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
         <NewActivityForm defaultStart={defaultStart} defaultVisibility={user.defaultVisibility} />
         <Panel title="Automatisch bijhouden">
           <p>

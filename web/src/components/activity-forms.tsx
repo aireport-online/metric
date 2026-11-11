@@ -6,17 +6,32 @@ import { addCommentAction, createActivityAction, deleteActivityAction, updateAct
 import { ACTIVITY_INFO, VISIBILITY_LABEL } from "@/lib/activity-types";
 import { ACTIVITY_TYPES, VISIBILITIES, type ActivityType, type Visibility } from "@/lib/constants";
 import { ConfirmSubmit, SubmitButton } from "./client-bits";
+import { SportIcon } from "./icons";
 import { FormMessage } from "./ui";
 
-function TypeSelect({ defaultValue }: { defaultValue: ActivityType }) {
+/** Sport as a row of chips: each with its pictogram in its own tint, one of them chosen. */
+function SportPicker({ defaultValue }: { defaultValue: ActivityType }) {
   return (
-    <select id="type" name="type" defaultValue={defaultValue} className="input">
-      {ACTIVITY_TYPES.map((type) => (
-        <option key={type} value={type}>
-          {ACTIVITY_INFO[type].label}
-        </option>
-      ))}
-    </select>
+    <fieldset>
+      <legend className="label">Sport</legend>
+      <div className="flex flex-wrap gap-2">
+        {ACTIVITY_TYPES.map((type) => (
+          <label
+            key={type}
+            className="press flex h-11 cursor-pointer items-center gap-2 rounded-full bg-raised pl-3.5 pr-4 text-[15px] font-medium text-muted transition-colors duration-200 hover:text-ink has-[:checked]:bg-ink has-[:checked]:text-on-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink"
+          >
+            <input type="radio" name="type" value={type} defaultChecked={type === defaultValue} className="peer sr-only" />
+            <span className="peer-checked:hidden">
+              <SportIcon type={type} size={18} />
+            </span>
+            <span className="hidden peer-checked:block">
+              <SportIcon type={type} size={18} tinted={false} />
+            </span>
+            {ACTIVITY_INFO[type].label}
+          </label>
+        ))}
+      </div>
+    </fieldset>
   );
 }
 
@@ -36,29 +51,22 @@ export function NewActivityForm({ defaultStart, defaultVisibility }: { defaultSt
   const [state, action] = useActionState(createActivityAction, undefined);
   const v = state?.values;
   return (
-    <form action={action} key={state?.nonce ?? "form"} className="panel flex flex-col gap-4 p-5">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="type" className="label">
-            Sport
-          </label>
-          <TypeSelect defaultValue={(v?.type as ActivityType | undefined) ?? "run"} />
-        </div>
-        <div>
-          <label htmlFor="startedAt" className="label">
-            Begonnen op
-          </label>
-          <input id="startedAt" name="startedAt" type="datetime-local" required defaultValue={v?.startedAt ?? defaultStart} className="input" />
-        </div>
+    <form action={action} key={state?.nonce ?? "form"} className="panel flex flex-col gap-5 p-6 max-sm:p-5">
+      <SportPicker defaultValue={(v?.type as ActivityType | undefined) ?? "run"} />
+      <div className="sm:max-w-[50%] sm:pr-2">
+        <label htmlFor="startedAt" className="label">
+          Begonnen op
+        </label>
+        <input id="startedAt" name="startedAt" type="datetime-local" required defaultValue={v?.startedAt ?? defaultStart} className="input" />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <fieldset>
           <legend className="label">Duur</legend>
           <div className="flex items-center gap-2">
             <input name="hours" inputMode="numeric" type="number" min={0} max={167} placeholder="0" aria-label="Uren" defaultValue={v?.hours} className="input num" />
-            <span className="text-muted">u</span>
+            <span className="figure-label text-muted">u</span>
             <input name="minutes" inputMode="numeric" type="number" min={0} max={59} placeholder="30" aria-label="Minuten" defaultValue={v?.minutes} className="input num" />
-            <span className="text-muted">min</span>
+            <span className="figure-label text-muted">min</span>
           </div>
         </fieldset>
         <div>
@@ -67,7 +75,7 @@ export function NewActivityForm({ defaultStart, defaultVisibility }: { defaultSt
           </label>
           <div className="flex items-center gap-2">
             <input id="distanceKm" name="distanceKm" inputMode="decimal" placeholder="5,0" defaultValue={v?.distanceKm} className="input num" />
-            <span className="text-muted">km</span>
+            <span className="figure-label text-muted">km</span>
           </div>
         </div>
       </div>
@@ -118,28 +126,21 @@ export function EditActivityForm({
 }) {
   const [state, action] = useActionState(updateActivityAction.bind(null, id), undefined);
   return (
-    <div className="panel p-5">
-      <h2 className="text-[16px] font-medium leading-6">Activiteit bewerken</h2>
-      <form action={action} key={state?.nonce ?? "form"} className="mt-3 flex flex-col gap-4">
+    <div className="panel p-6 max-sm:p-5">
+      <h2 className="display text-[24px] leading-[1.1]">Activiteit bewerken</h2>
+      <form action={action} key={state?.nonce ?? "form"} className="mt-4 flex flex-col gap-5">
         <div>
           <label htmlFor="title" className="label">
             Titel
           </label>
           <input id="title" name="title" maxLength={80} defaultValue={state?.values?.title ?? title} placeholder={fallbackTitle} className="input" />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="type" className="label">
-              Sport
-            </label>
-            <TypeSelect defaultValue={(state?.values?.type as ActivityType | undefined) ?? type} />
-          </div>
-          <div>
-            <label htmlFor="visibility" className="label">
-              Zichtbaar voor
-            </label>
-            <VisibilitySelect defaultValue={(state?.values?.visibility as Visibility | undefined) ?? visibility} />
-          </div>
+        <SportPicker defaultValue={(state?.values?.type as ActivityType | undefined) ?? type} />
+        <div className="sm:max-w-[50%] sm:pr-2">
+          <label htmlFor="visibility" className="label">
+            Zichtbaar voor
+          </label>
+          <VisibilitySelect defaultValue={(state?.values?.visibility as Visibility | undefined) ?? visibility} />
         </div>
         <div>
           <label htmlFor="notes" className="label">

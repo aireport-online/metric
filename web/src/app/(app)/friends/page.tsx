@@ -40,11 +40,11 @@ function Person({
   wrap?: boolean;
 }) {
   return (
-    <li className={`flex min-h-12 items-center gap-x-3 gap-y-2 border-t border-rule py-2 first:border-t-0 ${wrap ? "flex-wrap" : ""}`}>
-      <Avatar username={user.username} name={user.displayName} size={32} />
+    <li className={`flex min-h-14 items-center gap-x-3 gap-y-2 border-t border-line py-2.5 first:border-t-0 ${wrap ? "flex-wrap" : ""}`}>
+      <Avatar name={user.displayName} size={36} />
       <Link href={`/u/${user.username}`} className={`min-w-0 flex-1 hover:underline ${wrap ? "basis-32" : ""}`}>
         <span className="block truncate font-medium">{user.displayName}</span>
-        <span className="block truncate text-[12px] leading-4 text-muted">@{user.username}</span>
+        <span className="block truncate text-[14px] leading-5 text-muted">@{user.username}</span>
       </Link>
       <div className={`flex flex-none items-center gap-2 ${wrap ? "ml-auto" : ""}`}>{children}</div>
     </li>
@@ -76,21 +76,19 @@ export default async function FriendsPage({ searchParams }: PageProps<"/friends"
   return (
     <>
       <PageTitle title="Vrienden" sub={finding} action={<CopyButton value={profileUrl} label="Kopieer je profiel-link" className="btn btn-primary" />} />
-
-      {/* 776 + 12 + 364 = 1152 */}
-      <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_364px]">
-        <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="stagger flex flex-col gap-4">
           <Panel
-            title="Ranglijst van deze week"
-            aside={board.weekStart ? <span className="text-[12px]">sinds maandag {formatWeekStart(board.weekStart)}</span> : null}
+            title="Startopstelling van deze week"
+            aside={board.weekStart ? <span className="text-[14px]">sinds maandag {formatWeekStart(board.weekStart)}</span> : null}
           >
-            <div className="mb-3 inline-flex rounded-control bg-raised p-0.5" role="group" aria-label="Rangschikken op">
+            <div className="mb-2 inline-flex rounded-full bg-raised p-1" role="group" aria-label="Rangschikken op">
               {METRICS.map((m) => (
                 <Link
                   key={m.id}
                   href={m.id === "duration" ? "/friends" : `/friends?metric=${m.id}`}
                   aria-current={m.id === metric ? "true" : undefined}
-                  className={`flex h-8 items-center rounded-[4px] px-3 font-medium ${m.id === metric ? "bg-surface text-ink" : "text-muted hover:text-ink"}`}
+                  className={`press flex h-9 items-center rounded-full px-4 text-[15px] font-medium transition-colors duration-200 ${m.id === metric ? "bg-ink text-on-accent" : "text-muted hover:text-ink"}`}
                 >
                   {m.label}
                 </Link>
@@ -99,7 +97,7 @@ export default async function FriendsPage({ searchParams }: PageProps<"/friends"
             <LeaderboardList board={board} />
           </Panel>
 
-          <Panel title="Je vrienden" aside={<span className="num text-[12px]">{friends.length}</span>}>
+          <Panel title="Je vrienden" aside={<span className="num text-[14px]">{friends.length}</span>}>
             {friends.length === 0 ? (
               <Empty>Je hebt nog geen vrienden toegevoegd. Zoek iemand op gebruikersnaam of deel je profiel-link.</Empty>
             ) : (
@@ -120,9 +118,9 @@ export default async function FriendsPage({ searchParams }: PageProps<"/friends"
           </Panel>
         </div>
 
-        <div className="flex flex-col gap-3 max-lg:order-first">
+        <div className="stagger flex flex-col gap-4 max-lg:order-first">
           {incoming.length > 0 || outgoing.length > 0 ? (
-            <Panel title="Verzoeken" aside={incoming.length > 0 ? <span className="num text-[12px]">{incoming.length} nieuw</span> : null}>
+            <Panel title="Verzoeken" aside={incoming.length > 0 ? <span className="num text-[14px]">{incoming.length} nieuw</span> : null}>
               <ul>
                 {incoming.map((request) => (
                   <Person key={request.id} user={request.user} wrap>
@@ -136,7 +134,7 @@ export default async function FriendsPage({ searchParams }: PageProps<"/friends"
                 ))}
                 {outgoing.map((request) => (
                   <Person key={request.id} user={request.user}>
-                    <span className="text-[12px] text-muted max-[400px]:hidden">Verstuurd</span>
+                    <span className="text-[14px] text-muted max-[400px]:hidden">Verstuurd</span>
                     <ActionButton action={deleteFriendRequestAction.bind(null, request.id)} className="btn btn-sm btn-outline">
                       Intrekken
                     </ActionButton>
@@ -153,7 +151,7 @@ export default async function FriendsPage({ searchParams }: PageProps<"/friends"
               </label>
               <input id="q" name="q" defaultValue={q} minLength={2} required placeholder="Naam of gebruikersnaam" className="input" autoCapitalize="none" />
               {metric !== "duration" ? <input type="hidden" name="metric" value={metric} /> : null}
-              <button type="submit" className="btn btn-secondary h-10">
+              <button type="submit" className="btn btn-secondary h-12">
                 Zoeken
               </button>
             </form>
@@ -173,7 +171,7 @@ export default async function FriendsPage({ searchParams }: PageProps<"/friends"
                           Accepteren
                         </ActionButton>
                       ) : (
-                        <span className="text-[12px] text-muted">{RELATION_NOTE[result.relation]}</span>
+                        <span className="text-[14px] text-muted">{RELATION_NOTE[result.relation]}</span>
                       )}
                     </Person>
                   ))}
@@ -184,7 +182,7 @@ export default async function FriendsPage({ searchParams }: PageProps<"/friends"
 
           <Panel title="Je profiel-link">
             <p className="text-muted">Wie deze link opent kan je een verzoek sturen en ziet je openbare activiteiten.</p>
-            <p className="mt-3 break-all rounded-control bg-raised px-3 py-2.5 font-mono text-[12px] leading-4">{profileUrl}</p>
+            <p className="mt-3 break-all rounded-control bg-raised px-3.5 py-3 text-[14px] leading-5">{profileUrl}</p>
           </Panel>
         </div>
       </div>

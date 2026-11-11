@@ -7,15 +7,15 @@ import { requireUser } from "@/server/session";
 
 export const metadata: Metadata = { title: "Instellingen" };
 
-/** One settings section: what it is on the left, its controls on the right. 440 + 12 + 700 = 1152. */
+/** One settings section: what it is on the left, its controls on the right. */
 function Section({ title, description, children }: { title: string; description: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="grid gap-x-3 gap-y-4 border-t border-line py-8 first:border-t-0 first:pt-0 lg:grid-cols-[440px_minmax(0,700px)]">
+    <section className="grid gap-x-8 gap-y-4 border-t border-line py-8 first:border-t-0 first:pt-0 lg:grid-cols-[400px_minmax(0,1fr)]">
       <div className="max-w-[44ch] lg:pt-2">
-        <h2 className="text-[16px] font-medium leading-6">{title}</h2>
+        <h2 className="display text-[24px] leading-[1.1]">{title}</h2>
         <div className="mt-1 text-muted">{description}</div>
       </div>
-      <div className="panel p-5">{children}</div>
+      <div className="panel p-6 max-sm:p-5">{children}</div>
     </section>
   );
 }

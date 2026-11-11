@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Account aanmaken" };
 export default function RegisterPage() {
   return (
     <>
-      <h1 className="pb-5 text-[24px] font-bold leading-8 tracking-[-0.01em]">Account aanmaken</h1>
+      <h1 className="pb-5 display text-[44px] leading-[1.05] max-sm:text-[34px]">Account aanmaken</h1>
       <RegisterForm />
     </>
   );

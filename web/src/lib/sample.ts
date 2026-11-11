@@ -45,3 +45,14 @@ export const SAMPLE_ROUTE: [number, number][] = Array.from({ length: 48 }, (_, i
   const r = 1 + 0.22 * Math.sin(3 * t) + 0.1 * Math.cos(5 * t);
   return [52.358 + 0.0062 * r * Math.sin(t), 4.868 + 0.0125 * r * Math.cos(t)];
 });
+
+/** The starting grid of the sample week: the same shape the leaderboard endpoint returns. */
+export const SAMPLE_BOARD = {
+  metric: "duration" as const,
+  weekStart: "2026-11-09",
+  entries: [
+    { rank: 1, user: { id: "s1", username: "noor", displayName: "Noor" }, value: 192 * 60, count: 4, isMe: false },
+    { rank: 2, user: { id: "s2", username: "sanne", displayName: "Sanne" }, value: SAMPLE_WEEK_SECONDS, count: 3, isMe: true },
+    { rank: 3, user: { id: "s3", username: "daan", displayName: "Daan" }, value: 91 * 60, count: 2, isMe: false },
+  ],
+};

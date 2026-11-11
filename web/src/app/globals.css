@@ -1,65 +1,101 @@
 @import "tailwindcss";
 
 /*
- * Achromatic ledger: no colour in the chrome. Ink for figures, grey for comparison,
- * and one hue (--hue) on the main data element of each screen.
+ * Metric house style (brand/README.md, brand/tokens.json). Always dark: the night track as
+ * ground, chalk for text, tartan for what is yours and volt for the moment that counts.
+ * This file is the one place the tokens live; components only use the names below.
  */
 :root {
-  color-scheme: light;
-  --ground: #f8f8f8;
-  --surface: #ffffff;
-  --raised: #eeeeee;
-  --border: #e6e6e6;
-  --rule: #f0f0f0;
-  --control: #d4d4d4;
-  --text: #0a0a0a;
-  --muted: #6b6b6b;
-  --primary: #141414;
-  --hue: #1d5fbf;
-  --context: #8a8a8a;
-  --positive: #2e7d32;
-  --negative: #c4242a;
-  --grid: #e5e5e5;
+  color-scheme: dark;
+
+  /* colour */
+  --bg: #0c0e11;
+  --surface: #15181d;
+  --raised: #1e2228;
+  --line: #2a2f37;
+  --line-strong: #3a404a;
+  --text: #f4f1ea;
+  --text-secondary: #a9afb8;
+  --text-muted: #8a919c;
+  --accent: #f2542d;
+  --accent-hover: #ff6a3d;
+  --on-accent: #0c0e11;
+  --volt: #d4ff3a;
+  --danger: #ff5c7a;
+  --warning: #ffc247;
+  --success: #5be08a;
+  /* earlier weeks in charts: neutral context, 3:1 against the card */
+  --context: #646c77;
+  --grid: #23272e;
+
+  /* one tint per sport family; thin marks only, always next to the icon and the name */
+  --sport-lopen: #f2542d;
+  --sport-fietsen: #d4ff3a;
+  --sport-water: #68d0f6;
+  --sport-kracht: #d16cde;
+  --sport-veld: #399e78;
+  --sport-balans: #eab76c;
+  --sport-overig: #8a919c;
+
+  /* motion */
+  --d-tap: 120ms;
+  --d-quick: 200ms;
+  --d-base: 320ms;
+  --d-slow: 520ms;
+  --d-count: 800ms;
+  --d-lap: 900ms;
+  --stagger-list: 60ms;
+  --stagger-lane: 80ms;
+  --ease-sprint: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-stride: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-kick: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @theme inline {
-  --color-ground: var(--ground);
+  --color-ground: var(--bg);
   --color-surface: var(--surface);
   --color-raised: var(--raised);
-  --color-line: var(--border);
-  --color-rule: var(--rule);
-  --color-control: var(--control);
+  --color-line: var(--line);
+  --color-rule: var(--line);
+  --color-control: var(--line-strong);
   --color-ink: var(--text);
-  --color-muted: var(--muted);
-  --color-primary: var(--primary);
-  --color-hue: var(--hue);
+  --color-muted: var(--text-secondary);
+  --color-quiet: var(--text-muted);
+  --color-primary: var(--accent);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-volt: var(--volt);
+  --color-hue: var(--accent);
   --color-context: var(--context);
-  --color-positive: var(--positive);
-  --color-negative: var(--negative);
+  --color-positive: var(--success);
+  --color-negative: var(--danger);
+  --color-warning: var(--warning);
   --color-grid: var(--grid);
-  --font-sans: var(--font-geist-sans), Inter, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --radius-card: 8px;
-  --radius-control: 6px;
-  --radius-chip: 4px;
+  --font-sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue Condensed", sans-serif;
+  --radius-card: 20px;
+  --radius-control: 14px;
+  --radius-chip: 10px;
+  --ease-sprint: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-kick: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 html {
-  background: var(--ground);
+  background: var(--bg);
 }
 
 body {
-  background: var(--ground);
+  background: var(--bg);
   color: var(--text);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 16px;
+  line-height: 24px;
+  font-variant-numeric: tabular-nums;
 }
 
 /*
- * Page column: 1152px centred. Grid sums at full width (gap 12):
- *   main + rail   776 + 12 + 364 = 1152
- *   two halves    570 + 12 + 570 = 1152
- *   settings      440 + 12 + 700 = 1152
+ * Page column: 1152px centred. Grid sums at full width (gap 16):
+ *   main + rail   756 + 16 + 380 = 1152
  */
 @utility column {
   width: 100%;
@@ -75,10 +111,42 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Headings: Barlow Condensed bold, upright. */
+@utility display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.005em;
+}
+
+/* Figures: the number is the hero. Barlow Condensed italic with tabular figures. */
+@utility figure {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+@utility figure-xl {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+}
+
+/* Label next to a figure. */
+@utility figure-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+
 @layer components {
   .panel {
     background: var(--surface);
-    border: 1px solid var(--border);
     border-radius: var(--radius-card);
   }
 
@@ -87,21 +155,23 @@ body {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    height: 36px;
-    padding: 0 14px;
-    border-radius: var(--radius-control);
-    font-size: 14px;
+    height: 44px;
+    padding: 0 20px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 16px;
     font-weight: 500;
     white-space: nowrap;
     flex: none;
     cursor: pointer;
     transition:
-      background-color 120ms,
-      border-color 120ms,
-      transform 80ms;
+      background-color var(--d-quick) var(--ease-sprint),
+      border-color var(--d-quick) var(--ease-sprint),
+      color var(--d-quick) var(--ease-sprint),
+      transform var(--d-tap) var(--ease-sprint);
   }
   .btn:active {
-    transform: translateY(1px);
+    transform: scale(0.97);
   }
   .btn:disabled,
   .btn[aria-disabled="true"] {
@@ -109,81 +179,104 @@ body {
     opacity: 0.6;
   }
   .btn-primary {
-    background: var(--primary);
-    color: #ffffff;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 600;
   }
   .btn-primary:hover {
-    background: #2e2e2e;
+    background: var(--accent-hover);
   }
   .btn-secondary {
-    background: #e5e5e5;
+    background: var(--raised);
     color: var(--text);
   }
   .btn-secondary:hover {
-    background: #dadada;
+    background: var(--line);
   }
   .btn-outline {
-    background: var(--surface);
+    background: transparent;
     color: var(--text);
-    border: 1px solid var(--control);
+    border-color: var(--line-strong);
   }
   .btn-outline:hover {
-    border-color: #a3a3a3;
+    background: var(--raised);
   }
   .btn-danger {
-    background: var(--surface);
-    color: var(--negative);
-    border: 1px solid var(--control);
+    background: transparent;
+    color: var(--danger);
+    border-color: var(--line-strong);
   }
   .btn-danger:hover {
-    border-color: var(--negative);
+    border-color: var(--danger);
   }
   .btn-sm {
-    height: 32px;
-    padding: 0 12px;
+    height: 36px;
+    padding: 0 14px;
+    font-size: 14px;
   }
+  /* Switched on: yours, so tartan with ink text. */
   .btn-on {
-    background: var(--primary);
-    color: #ffffff;
-    border-color: var(--primary);
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 600;
+    border-color: transparent;
+  }
+  .btn-on:hover {
+    background: var(--accent-hover);
   }
 
   .link {
     color: var(--text);
     font-weight: 500;
-    text-underline-offset: 3px;
+    text-decoration: underline;
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 4px;
+    transition: text-decoration-color var(--d-quick) var(--ease-sprint);
   }
   .link:hover {
-    text-decoration: underline;
+    text-decoration-color: var(--accent);
   }
 
   .input {
     width: 100%;
-    height: 40px;
-    padding: 0 12px;
-    background: var(--surface);
-    border: 1px solid var(--control);
+    height: 48px;
+    padding: 0 14px;
+    background: var(--raised);
+    border: 1px solid var(--line-strong);
     border-radius: var(--radius-control);
-    font-size: 14px;
+    font-size: 16px;
     color: var(--text);
+    transition: border-color var(--d-quick) var(--ease-sprint);
   }
   textarea.input {
     height: auto;
-    padding: 10px 12px;
-    line-height: 20px;
+    padding: 12px 14px;
+    line-height: 24px;
     resize: vertical;
   }
+  select.input {
+    appearance: none;
+    padding-right: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23A9AFB8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+  }
   .input::placeholder {
-    color: var(--muted);
+    color: var(--text-muted);
   }
   .input:hover {
-    border-color: #a3a3a3;
+    border-color: var(--text-muted);
+  }
+  .input:focus-visible {
+    border-color: var(--text);
+    outline-offset: 0;
   }
   .label {
     display: block;
     margin-bottom: 8px;
     font-size: 14px;
     font-weight: 500;
+    color: var(--text-secondary);
   }
 
   .skeleton {
@@ -192,13 +285,171 @@ body {
   }
 }
 
+input[type="radio"] {
+  accent-color: var(--accent);
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
 :focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 2px;
 }
 
+/*
+ * Motion. Everything is a CSS animation that ends in the element's own resting state, so content
+ * is there without JavaScript, and it replays cleanly when a kept route becomes visible again.
+ */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+/* Track lane and route line: the stroke runs out from its start. */
+@keyframes lap {
+  from {
+    stroke-dashoffset: var(--lap-from);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+/* Columns and bars grow from their baseline. */
+@keyframes grow-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+/* Kudos and a reached goal: spring past the mark and settle. */
+@keyframes kick {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+/* The finish mark takes its colour once the lap is in. */
+@keyframes finish {
+  from {
+    stroke: var(--text);
+    background-color: var(--text);
+  }
+}
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@layer utilities {
+  .rise {
+    animation: rise var(--d-base) var(--ease-sprint) both;
+    animation-delay: calc(min(var(--i, 0), 6) * var(--stagger-list));
+  }
+  /* Children come in one after another; at most six, the rest is simply there. */
+  .stagger > *:nth-child(-n + 6) {
+    animation: rise var(--d-base) var(--ease-sprint) both;
+  }
+  .stagger > *:nth-child(2) {
+    animation-delay: calc(1 * var(--stagger-list));
+  }
+  .stagger > *:nth-child(3) {
+    animation-delay: calc(2 * var(--stagger-list));
+  }
+  .stagger > *:nth-child(4) {
+    animation-delay: calc(3 * var(--stagger-list));
+  }
+  .stagger > *:nth-child(5) {
+    animation-delay: calc(4 * var(--stagger-list));
+  }
+  .stagger > *:nth-child(6) {
+    animation-delay: calc(5 * var(--stagger-list));
+  }
+
+  .lap {
+    animation: lap var(--d-lap) var(--ease-sprint) both;
+    animation-delay: calc(var(--lane, 0) * var(--stagger-lane) + var(--lap-delay, 0ms));
+  }
+  .grow-y {
+    transform-origin: bottom;
+    animation: grow-y var(--d-slow) var(--ease-sprint) both;
+    animation-delay: calc(var(--i, 0) * 35ms);
+  }
+  .grow-x {
+    transform-origin: left;
+    animation: grow-x var(--d-lap) var(--ease-sprint) both;
+    animation-delay: calc(var(--i, 0) * var(--stagger-lane));
+  }
+  .fade-in {
+    animation: fade var(--d-base) var(--ease-sprint) both;
+  }
+  .kick {
+    animation: kick var(--d-base) var(--ease-kick) both;
+  }
+  .finish-reached {
+    animation: finish var(--d-quick) var(--ease-sprint) both;
+    animation-delay: var(--d-lap);
+  }
+  .sheet-in {
+    animation: sheet-in var(--d-slow) var(--ease-sprint) both;
+  }
+  .press {
+    transition: transform var(--d-tap) var(--ease-sprint);
+  }
+  .press:active {
+    transform: scale(0.97);
+  }
+}
+
+/* Route change: the page that leaves fades out quickly, the next one fades in. */
+::view-transition-old(.page-out) {
+  animation: fade var(--d-tap) var(--ease-exit) reverse both;
+}
+::view-transition-new(.page-in) {
+  animation: fade var(--d-quick) var(--ease-sprint) var(--d-tap) both;
+}
+
+/* Reduce motion: no travel, scale or spring. End states appear at once; entrances become a short fade. */
 @media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
+  .rise,
+  .fade-in,
+  .stagger > *:nth-child(-n + 6),
+  .sheet-in {
+    animation: fade 120ms linear both;
+    animation-delay: 0ms !important;
+  }
+  .lap,
+  .grow-y,
+  .grow-x,
+  .kick,
+  .finish-reached {
+    animation: none;
+  }
+  .btn,
+  .press {
+    transition: background-color 120ms linear, color 120ms linear, border-color 120ms linear;
+  }
+  .btn:active,
+  .press:active {
+    transform: none;
   }
 }

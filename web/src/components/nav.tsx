@@ -2,45 +2,37 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { CloseIcon, MenuIcon } from "./icons";
+import { FeedIcon, FriendsIcon, StopwatchIcon, TrackIcon } from "./icons";
 import { Avatar } from "./ui";
 
 type NavUser = { username: string; displayName: string };
 
 const LINKS = [
-  { href: "/feed", label: "Feed" },
-  { href: "/dashboard", label: "Voortgang" },
-  { href: "/activities", label: "Activiteiten" },
-  { href: "/friends", label: "Vrienden" },
+  { href: "/feed", label: "Feed", Icon: FeedIcon },
+  { href: "/dashboard", label: "Voortgang", Icon: TrackIcon },
+  { href: "/activities", label: "Activiteiten", Icon: StopwatchIcon },
+  { href: "/friends", label: "Vrienden", Icon: FriendsIcon },
 ];
 
 const isActive = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
-export function Nav({ user, requests, logout }: { user: NavUser; requests: number; logout: () => Promise<void> }) {
+/**
+ * Desktop: links in the top bar, the current one underlined by a tartan lane. Phone: the same four
+ * destinations as a tab bar at the bottom of the screen, within reach of a thumb.
+ */
+export function Nav({ user, requests }: { user: NavUser; requests: number }) {
   const pathname = usePathname();
-  // The sheet remembers the page it was opened on, so navigating anywhere closes it by itself.
-  const [openedOn, setOpenedOn] = useState<string | null>(null);
-  const open = openedOn === pathname;
-  const setOpen = (next: boolean) => setOpenedOn(next ? pathname : null);
 
-  // Keep the page behind the sheet from scrolling.
-  useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [open]);
-
-  const badge = requests > 0 ? (
-    <span className="num ml-1.5 rounded-full bg-primary px-1.5 text-[12px] leading-[18px] text-white" aria-label={`${requests} open verzoeken`}>
-      {requests}
-    </span>
-  ) : null;
+  const badge =
+    requests > 0 ? (
+      <span className="num ml-1.5 rounded-full bg-accent px-1.5 text-[13px] font-semibold leading-[20px] text-on-accent" aria-label={`${requests} open verzoeken`}>
+        {requests}
+      </span>
+    ) : null;
 
   return (
     <>
-      <nav aria-label="Hoofdmenu" className="flex items-center gap-1 max-md:hidden">
+      <nav aria-label="Hoofdmenu" className="flex items-center gap-1 self-stretch max-md:hidden">
         {LINKS.map((link) => {
           const active = isActive(pathname, link.href);
           return (
@@ -48,12 +40,11 @@ export function Nav({ user, requests, logout }: { user: NavUser; requests: numbe
               key={link.href}
               href={link.href}
               aria-current={active ? "page" : undefined}
-              className={`flex h-8 items-center rounded-control px-3 font-medium transition-colors ${
-                active ? "bg-raised text-ink" : "text-muted hover:text-ink"
-              }`}
+              className={`relative flex items-center px-3.5 font-medium transition-colors duration-200 ${active ? "text-ink" : "text-muted hover:text-ink"}`}
             >
               {link.label}
               {link.href === "/friends" ? badge : null}
+              {active ? <span aria-hidden className="grow-x absolute inset-x-3.5 bottom-0 h-[3px] rounded-full bg-accent" style={{ animationDuration: "320ms" }} /> : null}
             </Link>
           );
         })}
@@ -61,57 +52,37 @@ export function Nav({ user, requests, logout }: { user: NavUser; requests: numbe
 
       <Link
         href="/settings"
-        className="ml-auto flex h-8 items-center gap-2 rounded-control pl-1 pr-2.5 font-medium hover:bg-raised max-md:hidden"
+        className="press ml-auto flex h-10 items-center gap-2.5 rounded-full pl-1 pr-4 font-medium hover:bg-raised max-lg:pr-1"
         aria-current={isActive(pathname, "/settings") ? "page" : undefined}
       >
-        <Avatar username={user.username} name={user.displayName} size={24} />
-        {user.displayName}
+        <Avatar name={user.displayName} size={32} />
+        <span className="whitespace-nowrap max-lg:sr-only">{user.displayName}</span>
       </Link>
 
-      <button
-        type="button"
-        className="-mr-2 ml-auto flex h-11 w-11 items-center justify-center md:hidden"
-        aria-expanded={open}
-        aria-controls="menu-sheet"
-        onClick={() => setOpen(true)}
+      <nav
+        aria-label="Hoofdmenu"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-line bg-ground pb-[env(safe-area-inset-bottom)] md:hidden"
       >
-        <MenuIcon width={20} height={20} />
-        <span className="sr-only">Menu openen</span>
-        {requests > 0 ? <span className="absolute ml-5 -mt-4 h-2 w-2 rounded-full bg-primary" aria-hidden /> : null}
-      </button>
-
-      {open ? (
-        <div id="menu-sheet" role="dialog" aria-modal="true" aria-label="Menu" className="fixed inset-0 z-50 flex flex-col bg-ground md:hidden">
-          <div className="column flex h-12 flex-none items-center justify-between">
-            <span className="flex items-center gap-2 font-medium">
-              <Avatar username={user.username} name={user.displayName} size={24} />
-              {user.displayName}
-            </span>
-            <button type="button" className="-mr-2 flex h-11 w-11 items-center justify-center" onClick={() => setOpen(false)}>
-              <CloseIcon width={20} height={20} />
-              <span className="sr-only">Menu sluiten</span>
-            </button>
-          </div>
-          <nav aria-label="Hoofdmenu" className="column flex flex-col pt-2">
-            {[...LINKS, { href: "/settings", label: "Instellingen" }].map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                aria-current={isActive(pathname, link.href) ? "page" : undefined}
-                className="flex h-12 items-center border-b border-line text-[16px] font-medium"
-              >
-                {link.label}
-                {link.href === "/friends" ? badge : null}
-              </Link>
-            ))}
-            <form action={logout} className="pt-5">
-              <button type="submit" className="btn btn-secondary w-full">
-                Uitloggen
-              </button>
-            </form>
-          </nav>
-        </div>
-      ) : null}
+        {LINKS.map(({ href, label, Icon }) => {
+          const active = isActive(pathname, href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              className={`press relative flex h-16 flex-col items-center justify-center gap-1 text-[12px] font-medium ${active ? "text-ink" : "text-quiet"}`}
+            >
+              {active ? <span aria-hidden className="grow-x absolute inset-x-6 top-0 h-[3px] rounded-full bg-accent" style={{ animationDuration: "320ms", transformOrigin: "center" }} /> : null}
+              <span className="relative">
+                <Icon className={active ? "text-accent" : undefined} />
+                {href === "/friends" && requests > 0 ? <span className="absolute -right-1.5 -top-1 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-ground" aria-hidden /> : null}
+              </span>
+              {label}
+              {href === "/friends" && requests > 0 ? <span className="sr-only"> ({requests} open verzoeken)</span> : null}
+            </Link>
+          );
+        })}
+      </nav>
     </>
   );
 }

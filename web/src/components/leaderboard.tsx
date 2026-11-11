@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { formatCount, formatHoursMinutes, formatKm } from "@/lib/format";
 import type { Leaderboard, LeaderboardMetric } from "@/server/stats";
-import { Avatar, Empty } from "./ui";
+import { Track } from "./track";
+import { Empty } from "./ui";
 
 export function leaderboardValue(metric: LeaderboardMetric, value: number): string {
   if (metric === "duration") return formatHoursMinutes(value);
@@ -9,7 +10,10 @@ export function leaderboardValue(metric: LeaderboardMetric, value: number): stri
   return `${formatCount(value)}×`;
 }
 
-/** Ranking where each row's fill is its bar: as wide as its share of the leader's total. */
+/**
+ * The ranking as a starting grid: everyone in their own lane with a lane number, and a small track
+ * that is as full as their share of the leader's total. Your own lane is tartan.
+ */
 export function LeaderboardList({ board, limit }: { board: Leaderboard; limit?: number }) {
   const entries = limit ? board.entries.slice(0, limit) : board.entries;
   const max = Math.max(...board.entries.map((entry) => entry.value), 0);
@@ -17,27 +21,34 @@ export function LeaderboardList({ board, limit }: { board: Leaderboard; limit?: 
     return <Empty>Nodig vrienden uit om te zien wie deze week het meest beweegt.</Empty>;
   }
   return (
-    <ol className="flex flex-col gap-0.5">
-      {entries.map((entry) => (
-        <li key={entry.user.id} className="relative flex h-11 items-center gap-3 px-2.5">
-          {entry.value > 0 ? (
-            <span
-              aria-hidden
-              className={`absolute inset-y-0 left-0 rounded-control ${entry.isMe ? "bg-hue/[0.14]" : "bg-raised"}`}
-              style={{ width: `${Math.max((entry.value / max) * 100, 4)}%` }}
+    <ol className="stagger flex flex-col">
+      {entries.map((entry) => {
+        const leads = entry.rank === 1 && entry.value > 0;
+        return (
+          <li key={entry.user.id} className="flex min-h-16 items-center gap-4 border-t border-line py-2.5 first:border-t-0">
+            <span className={`figure w-7 flex-none text-center text-[36px] ${leads ? "text-volt" : entry.isMe ? "text-accent" : "text-quiet"}`}>
+              {entry.rank}
+            </span>
+            <span className="min-w-0 flex-1">
+              <Link href={`/u/${entry.user.username}`} className="block truncate font-medium hover:underline">
+                {entry.isMe ? "Jij" : entry.user.displayName}
+              </Link>
+              <span className={`num block whitespace-nowrap text-[14px] leading-5 ${entry.value > 0 ? "text-muted" : "text-quiet"}`}>
+                {leaderboardValue(board.metric, entry.value)}
+              </span>
+            </span>
+            <Track
+              className="flex-none"
+              fixed
+              width={88}
+              aspect={2.2}
+              thickness={6}
+              lanes={[{ progress: max > 0 ? entry.value / max : 0, color: entry.isMe ? "var(--accent)" : "var(--text)" }]}
+              label={`${max > 0 ? Math.round((entry.value / max) * 100) : 0}% van de koploper`}
             />
-          ) : null}
-          <span className="num relative w-4 flex-none text-right text-muted">{entry.rank}</span>
-          <span className="relative flex flex-none">
-            <Avatar username={entry.user.username} name={entry.user.displayName} size={24} />
-          </span>
-          <Link href={`/u/${entry.user.username}`} className={`relative min-w-0 flex-1 truncate hover:underline ${entry.isMe ? "font-medium" : ""}`}>
-            {entry.user.displayName}
-            {entry.isMe ? <span className="font-normal text-muted"> (jij)</span> : null}
-          </Link>
-          <span className={`num relative flex-none ${entry.value > 0 ? "" : "text-muted"}`}>{leaderboardValue(board.metric, entry.value)}</span>
-        </li>
-      ))}
+          </li>
+        );
+      })}
     </ol>
   );
 }

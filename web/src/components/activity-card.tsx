@@ -5,13 +5,18 @@ import { useOptimistic, useState, useTransition } from "react";
 import { setKudosAction } from "@/app/actions/activities";
 import { ACTIVITY_INFO, activityTitle } from "@/lib/activity-types";
 import { formatClock, formatKm, formatRate, formatWhen } from "@/lib/format";
+import { sportColor } from "@/lib/sports";
 import type { ActivityDto } from "@/server/serialize";
-import { CommentIcon, KudosIcon } from "./icons";
+import { CommentIcon, KudosIcon, SportIcon } from "./icons";
 import { RouteThumb } from "./route-map";
 import { Avatar, Figure } from "./ui";
 
 export type CardActivity = ActivityDto & { routePreview?: [number, number][] | null };
 
+/**
+ * Kudos: the icon springs, the button turns tartan and the count ticks over. The spring is keyed
+ * on the number of presses, so it replays on every press and never on first render.
+ */
 export function KudosButton({
   activityId,
   count,
@@ -27,12 +32,13 @@ export function KudosButton({
 }) {
   const [state, setState] = useState({ count, on });
   const [optimistic, setOptimistic] = useOptimistic(state);
+  const [presses, setPresses] = useState(0);
   const [, startTransition] = useTransition();
   const sizing = size === "sm" ? "btn-sm" : "";
 
   if (!canKudo) {
     return (
-      <span className="num inline-flex h-8 items-center gap-1.5 text-muted">
+      <span className="num inline-flex h-9 items-center gap-1.5 text-muted">
         <KudosIcon />
         {count} kudos
       </span>
@@ -42,8 +48,10 @@ export function KudosButton({
     <button
       type="button"
       aria-pressed={optimistic.on}
+      data-kudos
       className={`btn ${sizing} ${optimistic.on ? "btn-on" : "btn-outline"}`}
-      onClick={() =>
+      onClick={() => {
+        setPresses((n) => n + 1);
         startTransition(async () => {
           const next = { on: !optimistic.on, count: optimistic.count + (optimistic.on ? -1 : 1) };
           setOptimistic(next);
@@ -53,12 +61,16 @@ export function KudosButton({
           } catch {
             setState((current) => ({ ...current }));
           }
-        })
-      }
+        });
+      }}
     >
-      <KudosIcon />
+      <span key={presses} className={presses > 0 && optimistic.on ? "kick inline-flex" : "inline-flex"}>
+        <KudosIcon />
+      </span>
       <span>Kudos</span>
-      <span className="num">{optimistic.count}</span>
+      <span key={`n${optimistic.count}`} className={`num ${presses > 0 ? "rise" : ""}`}>
+        {optimistic.count}
+      </span>
     </button>
   );
 }
@@ -66,7 +78,7 @@ export function KudosButton({
 export function ActivityFigures({ activity }: { activity: ActivityDto }) {
   const rate = formatRate(activity.type, activity.distanceMeters, activity.durationSeconds);
   return (
-    <div className="flex flex-wrap gap-x-8 gap-y-2">
+    <div className="flex flex-wrap gap-x-9 gap-y-3 max-sm:gap-x-6">
       {activity.distanceMeters ? <Figure label="Afstand" value={formatKm(activity.distanceMeters)} unit="km" /> : null}
       <Figure label="Duur" value={formatClock(activity.durationSeconds)} />
       {rate ? <Figure label={rate.label} value={rate.value} unit={rate.unit} /> : null}
@@ -87,27 +99,27 @@ export function ActivityCard({
   const info = ACTIVITY_INFO[activity.type];
   const href = `/activities/${activity.id}`;
   return (
-    <article className="panel p-5 max-sm:p-4">
+    <article className="panel relative overflow-hidden p-6 pl-7 max-sm:p-5 max-sm:pl-6">
+      {/* The sport's lane down the card's edge. */}
+      <span aria-hidden className="absolute inset-y-0 left-0 w-[5px]" style={{ background: sportColor(activity.type) }} />
       <div className="flex items-start gap-3">
         <Link href={`/u/${activity.user.username}`} tabIndex={-1} aria-hidden>
-          <Avatar username={activity.user.username} name={activity.user.displayName} size={40} />
+          <Avatar name={activity.user.displayName} size={44} />
         </Link>
         <div className="min-w-0 flex-1">
           <p className="truncate">
-            <Link href={`/u/${activity.user.username}`} className="font-medium hover:underline">
+            <Link href={`/u/${activity.user.username}`} className="font-semibold hover:underline">
               {activity.user.displayName}
             </Link>{" "}
             <span className="text-muted">{info.verb}</span>
           </p>
-          <p className="text-[12px] leading-5 text-muted">
-            {formatWhen(activity.startedAt, timeZone)}
-            {activity.visibility === "private" ? " · alleen zichtbaar voor jou" : ""}
+          <p className="flex items-center gap-1.5 text-[14px] leading-5 text-muted">
+            <SportIcon type={activity.type} size={16} />
+            <span className="min-w-0 truncate">
+              {info.label} · {formatWhen(activity.startedAt, timeZone)}
+              {activity.visibility === "private" ? " · alleen jij" : ""}
+            </span>
           </p>
-          <h2 className="mt-2 text-[16px] font-medium leading-6">
-            <Link href={href} className="hover:underline">
-              {activityTitle(activity)}
-            </Link>
-          </h2>
         </div>
         {activity.routePreview ? (
           <Link href={href} tabIndex={-1} aria-hidden className="flex-none">
@@ -116,9 +128,15 @@ export function ActivityCard({
         ) : null}
       </div>
 
-      <div className="mt-3 sm:pl-[52px]">
+      <h2 className="display mt-4 text-[26px] leading-[1.1]">
+        <Link href={href} className="hover:underline">
+          {activityTitle(activity)}
+        </Link>
+      </h2>
+
+      <div className="mt-4">
         <ActivityFigures activity={activity} />
-        <div className="mt-4 flex items-center gap-2">
+        <div className="mt-5 flex items-center gap-2">
           <KudosButton activityId={activity.id} count={activity.kudosCount} on={activity.hasKudoed} canKudo={viewerId !== null} />
           <Link href={`${href}#reacties`} className="btn btn-sm btn-outline">
             <CommentIcon />

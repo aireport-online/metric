@@ -94,7 +94,7 @@ export function VisibilityForm({ defaultVisibility }: { defaultVisibility: Visib
         <legend className="label">Nieuwe activiteiten zijn zichtbaar voor</legend>
         {VISIBILITIES.map((visibility) => (
           <label key={visibility} className="flex min-h-11 cursor-pointer items-start gap-3 py-1.5">
-            <input type="radio" name="defaultVisibility" value={visibility} defaultChecked={visibility === selected} className="mt-1 h-4 w-4 accent-[#141414]" />
+            <input type="radio" name="defaultVisibility" value={visibility} defaultChecked={visibility === selected} className="mt-1 h-4 w-4" />
             <span>
               <span className="block font-medium">{VISIBILITY_LABEL[visibility]}</span>
               <span className="block text-muted">{VISIBILITY_HELP[visibility]}</span>

@@ -32,7 +32,7 @@ export function ActionButton({
         {children}
       </button>
       {state?.error ? (
-        <span role="alert" className="text-[12px] text-negative">
+        <span role="alert" className="text-[14px] text-negative">
           {state.error}
         </span>
       ) : null}

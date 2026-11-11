@@ -8,7 +8,8 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       <Suspense fallback={<TopBarFallback />}>
         <TopBar />
       </Suspense>
-      <main className="column flex-1 pb-16">{children}</main>
+      {/* On a phone the tab bar sits over the foot of the page, so the page ends above it. */}
+      <main className="column flex-1 pb-16 max-md:pb-28">{children}</main>
     </div>
   );
 }

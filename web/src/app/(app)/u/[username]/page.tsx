@@ -6,8 +6,9 @@ import { acceptFriendRequestAction, deleteFriendRequestAction, sendFriendRequest
 import { ActionButton } from "@/components/action-button";
 import { ActivityCard } from "@/components/activity-card";
 import { CopyButton } from "@/components/client-bits";
-import { Avatar, Empty, Panel } from "@/components/ui";
-import { formatCount, formatHoursMinutes, formatKm, formatMonthYear } from "@/lib/format";
+import { CountUp } from "@/components/count-up";
+import { Avatar, Empty, Figure, Panel } from "@/components/ui";
+import { formatHoursMinutes, formatKm, formatMonthYear } from "@/lib/format";
 import { getProfile } from "@/server/activities";
 import { ApiError } from "@/server/errors";
 import { getSessionUser, getTimeZone } from "@/server/session";
@@ -36,8 +37,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    openGraph: { title, description, url: `${appUrl()}/u/${profile.user.username}`, siteName: "Metric", type: "profile", locale: "nl_NL" },
-    twitter: { card: "summary", title, description },
+    openGraph: { title, description, url: `${appUrl()}/u/${profile.user.username}`, siteName: "Metric", type: "profile", locale: "nl_NL", images: ["/opengraph-image.png"] },
+    twitter: { card: "summary_large_image", title, description, images: ["/opengraph-image.png"] },
   };
 }
 
@@ -56,17 +57,17 @@ export default async function ProfilePage({ params }: Props) {
 
   return (
     <>
-      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4 pb-6 pt-8 max-sm:pt-5">
+      <header className="rise flex flex-wrap items-end justify-between gap-x-6 gap-y-4 pb-6 pt-8 max-sm:pt-5">
         <div className="flex min-w-0 items-center gap-4">
-          <Avatar username={user.username} name={user.displayName} size={56} />
+          <Avatar name={user.displayName} size={72} />
           <div className="min-w-0">
-            <h1 className="truncate text-[24px] font-bold leading-8 tracking-[-0.01em]">{user.displayName}</h1>
+            <h1 className="display truncate text-[44px] leading-[1.05] max-sm:text-[34px]">{user.displayName}</h1>
             <p className="text-muted">
               @{user.username} · lid sinds {formatMonthYear(user.createdAt)}
             </p>
           </div>
         </div>
-        <div className="flex flex-none flex-wrap items-center gap-2">
+        <div className="flex max-w-full flex-wrap items-center gap-2">
           {!viewer ? (
             <Link href="/register" className="btn btn-primary">
               Maak een account om {user.displayName} toe te voegen
@@ -103,10 +104,8 @@ export default async function ProfilePage({ params }: Props) {
           )}
         </div>
       </header>
-
-      {/* 776 + 12 + 364 = 1152 */}
-      <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_364px]">
-        <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="stagger flex flex-col gap-4">
           {activities.length === 0 ? (
             <Panel title="Activiteiten">
               <Empty>
@@ -124,29 +123,14 @@ export default async function ProfilePage({ params }: Props) {
           )}
         </div>
 
-        <div className="flex flex-col gap-3 max-lg:order-first">
-          <Panel title="Totaal" aside={<span className="text-[12px]">{scope}</span>}>
-            <dl className="grid grid-cols-3 gap-3">
-              <div>
-                <dt className="text-[12px] leading-4 text-muted">Activiteiten</dt>
-                <dd className="num mt-1 text-[24px] leading-8">{formatCount(stats.count)}</dd>
-              </div>
-              <div>
-                <dt className="text-[12px] leading-4 text-muted">Tijd</dt>
-                <dd className="num mt-1 text-[24px] leading-8">
-                  {formatCount(Math.round(stats.durationSeconds / 3600))}
-                  <span className="ml-1 text-[14px] text-muted">u</span>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-[12px] leading-4 text-muted">Afstand</dt>
-                <dd className="num mt-1 text-[24px] leading-8">
-                  {formatCount(Math.round(stats.distanceMeters / 1000))}
-                  <span className="ml-1 text-[14px] text-muted">km</span>
-                </dd>
-              </div>
-            </dl>
-            <p className="num mt-3 border-t border-rule pt-3 text-muted">
+        <div className="stagger flex flex-col gap-4 max-lg:order-first">
+          <Panel title="Totaal" aside={<span className="text-[14px]">{scope}</span>}>
+            <div className="grid grid-cols-3 gap-x-4 gap-y-4 pt-1">
+              <Figure label="Activiteiten" value={<CountUp value={stats.count} />} />
+              <Figure label="Uur" value={<CountUp value={Math.round(stats.durationSeconds / 3600)} />} />
+              <Figure label="Kilometer" value={<CountUp value={Math.round(stats.distanceMeters / 1000)} />} />
+            </div>
+            <p className="num mt-4 border-t border-line pt-4 text-muted">
               {formatHoursMinutes(stats.durationSeconds)} en {formatKm(stats.distanceMeters, 1)} km in totaal.
             </p>
           </Panel>

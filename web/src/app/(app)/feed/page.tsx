@@ -39,10 +39,10 @@ export default async function FeedPage() {
           </Link>
         }
       />
-      <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_364px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div>
           {feed.activities.length === 0 ? (
-            <Panel title="Nog niets te zien">
+            <Panel title="Nog niets opgenomen">
               <Empty>
                 Workouts van je iPhone en Apple Watch verschijnen hier vanzelf zodra de app ze heeft gesynchroniseerd.{" "}
                 <Link href="/activities/new" className="link">
@@ -59,7 +59,7 @@ export default async function FeedPage() {
             <FeedList initial={feed.activities} initialCursor={feed.nextCursor} timeZone={timeZone} viewerId={user.id} />
           )}
         </div>
-        <aside className="flex flex-col gap-3 max-lg:order-first">
+        <aside className="stagger flex flex-col gap-4 max-lg:order-first">
           <Panel
             title="Deze week"
             aside={
@@ -71,7 +71,7 @@ export default async function FeedPage() {
             <WeekGoal seconds={stats.thisWeek.durationSeconds} goalMinutes={stats.thisWeek.goalMinutes} days={days} />
           </Panel>
           <Panel
-            title="Ranglijst"
+            title="Startopstelling"
             className="max-lg:hidden"
             aside={
               <Link href="/friends" className="link">

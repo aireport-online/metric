@@ -5,12 +5,15 @@ import { connection } from "next/server";
 import { z } from "zod";
 import { deleteCommentAction } from "@/app/actions/activities";
 import { KudosButton } from "@/components/activity-card";
+import { CountUp } from "@/components/count-up";
+import { SportIcon } from "@/components/icons";
 import { CommentForm, EditActivityForm } from "@/components/activity-forms";
 import { ConfirmSubmit, CopyButton } from "@/components/client-bits";
 import { RouteMap } from "@/components/route-map";
 import { Avatar, Empty, Panel } from "@/components/ui";
 import { ACTIVITY_INFO, SOURCE_LABEL, VISIBILITY_LABEL, activityTitle } from "@/lib/activity-types";
-import { formatClock, formatCount, formatFullDate, formatKm, formatRate, formatWhen } from "@/lib/format";
+import { formatClock, formatFullDate, formatKm, formatRate, formatWhen } from "@/lib/format";
+import { sportColor } from "@/lib/sports";
 import { getActivityDetail } from "@/server/activities";
 import { ApiError } from "@/server/errors";
 import { getSessionUser, getTimeZone } from "@/server/session";
@@ -47,19 +50,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    openGraph: { title, description, url: `${appUrl()}/activities/${activity.id}`, siteName: "Metric", type: "article", locale: "nl_NL" },
-    twitter: { card: "summary", title, description },
+    openGraph: { title, description, url: `${appUrl()}/activities/${activity.id}`, siteName: "Metric", type: "article", locale: "nl_NL", images: ["/opengraph-image.png"] },
+    twitter: { card: "summary_large_image", title, description, images: ["/opengraph-image.png"] },
   };
 }
 
-function Stat({ label, value, unit }: { label: string; value: string; unit?: string }) {
+/** One figure of the activity. The first two are the headline and are set a size larger. */
+function Stat({ label, value, unit, big = false }: { label: string; value: React.ReactNode; unit?: string; big?: boolean }) {
   return (
-    <div>
-      <dt className="text-[12px] leading-4 text-muted">{label}</dt>
-      <dd className="num mt-1 text-[24px] leading-8">
+    <div className="min-w-0">
+      <dd className={`figure whitespace-nowrap ${big ? "figure-xl text-[72px] max-sm:text-[52px]" : "text-[36px]"}`}>
         {value}
-        {unit ? <span className="ml-1 text-[14px] text-muted">{unit}</span> : null}
+        {unit ? <span className="figure-label ml-1.5 not-italic text-quiet">{unit}</span> : null}
       </dd>
+      <dt className="figure-label mt-1.5 text-muted">{label}</dt>
     </div>
   );
 }
@@ -78,18 +82,21 @@ export default async function ActivityPage({ params, searchParams }: Props) {
 
   return (
     <>
-      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4 pb-6 pt-8 max-sm:pt-5">
+      <header className="rise flex flex-wrap items-end justify-between gap-x-6 gap-y-4 pb-6 pt-8 max-sm:pt-5">
         <div className="min-w-0">
-          <h1 className="text-[24px] font-bold leading-8 tracking-[-0.01em]">{activityTitle(activity)}</h1>
-          <p className="mt-2 flex items-center gap-2">
-            <Avatar username={activity.user.username} name={activity.user.displayName} size={24} />
-            <Link href={`/u/${activity.user.username}`} className="font-medium hover:underline">
+          <p className="flex items-center gap-2 text-muted">
+            <SportIcon type={activity.type} />
+            <span>
+              {info.label} · <time dateTime={activity.startedAt}>{formatFullDate(activity.startedAt, timeZone)}</time> · via{" "}
+              {SOURCE_LABEL[activity.source]}
+            </span>
+          </p>
+          <h1 className="display mt-2 text-[44px] leading-[1.05] max-sm:text-[34px]">{activityTitle(activity)}</h1>
+          <p className="mt-3 flex items-center gap-2.5">
+            <Avatar name={activity.user.displayName} size={32} />
+            <Link href={`/u/${activity.user.username}`} className="font-semibold hover:underline">
               {activity.user.displayName}
             </Link>
-          </p>
-          <p className="mt-1 text-muted">
-            {info.label} · <time dateTime={activity.startedAt}>{formatFullDate(activity.startedAt, timeZone)}</time> · via{" "}
-            {SOURCE_LABEL[activity.source]}
           </p>
         </div>
         <div className="flex max-w-full flex-wrap items-center gap-2">
@@ -104,20 +111,25 @@ export default async function ActivityPage({ params, searchParams }: Props) {
           ) : null}
         </div>
       </header>
-
-      {/* 776 + 12 + 364 = 1152 */}
-      <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_364px]">
-        <div className="flex flex-col gap-3">
-          <section className="panel p-5" aria-label="Cijfers">
-            <dl className="grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-3 lg:grid-cols-4">
-              {activity.distanceMeters ? <Stat label="Afstand" value={formatKm(activity.distanceMeters)} unit="km" /> : null}
-              <Stat label="Duur" value={formatClock(activity.durationSeconds)} />
-              {rate ? <Stat label={rate.label} value={rate.value} unit={rate.unit} /> : null}
-              {activity.avgHeartRate ? <Stat label="Gemiddelde hartslag" value={String(activity.avgHeartRate)} unit="bpm" /> : null}
-              {activity.maxHeartRate ? <Stat label="Hoogste hartslag" value={String(activity.maxHeartRate)} unit="bpm" /> : null}
-              {activity.activeEnergyKcal ? <Stat label="Energie" value={formatCount(activity.activeEnergyKcal)} unit="kcal" /> : null}
-              {activity.elevationGainMeters ? <Stat label="Hoogtemeters" value={formatCount(activity.elevationGainMeters)} unit="m" /> : null}
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="stagger flex flex-col gap-4">
+          <section className="panel relative overflow-hidden p-6 pl-8 max-sm:p-5 max-sm:pl-7" aria-label="Cijfers">
+            <span aria-hidden className="absolute inset-y-0 left-0 w-[5px]" style={{ background: sportColor(activity.type) }} />
+            <dl className="flex flex-wrap items-end gap-x-12 gap-y-5 max-sm:gap-x-8">
+              {activity.distanceMeters ? (
+                <Stat big label="Afstand" value={<CountUp value={activity.distanceMeters / 1000} format="decimal2" />} unit="km" />
+              ) : null}
+              <Stat big label="Duur" value={<CountUp value={activity.durationSeconds} format="clock" />} />
             </dl>
+            {rate || activity.avgHeartRate || activity.maxHeartRate || activity.activeEnergyKcal || activity.elevationGainMeters ? (
+              <dl className="mt-7 grid grid-cols-2 gap-x-8 gap-y-6 border-t border-line pt-6 sm:grid-cols-3 lg:grid-cols-5">
+                {rate ? <Stat label={rate.label} value={rate.value} unit={rate.unit} /> : null}
+                {activity.avgHeartRate ? <Stat label="Hartslag" value={<CountUp value={activity.avgHeartRate} />} unit="bpm" /> : null}
+                {activity.maxHeartRate ? <Stat label="Hoogste hartslag" value={<CountUp value={activity.maxHeartRate} />} unit="bpm" /> : null}
+                {activity.activeEnergyKcal ? <Stat label="Energie" value={<CountUp value={activity.activeEnergyKcal} />} unit="kcal" /> : null}
+                {activity.elevationGainMeters ? <Stat label="Hoogtemeters" value={<CountUp value={activity.elevationGainMeters} />} unit="m" /> : null}
+              </dl>
+            ) : null}
           </section>
 
           {editing ? (
@@ -128,13 +140,13 @@ export default async function ActivityPage({ params, searchParams }: Props) {
             <Panel
               title="Route"
               aside={
-                <ul className="flex items-center gap-4 text-[12px]">
+                <ul className="flex items-center gap-4 text-[14px]">
                   <li className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full border-2 border-ink bg-surface" aria-hidden />
+                    <span className="h-3 w-3 rounded-full border-[3px] border-ink" aria-hidden />
                     Start
                   </li>
                   <li className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-ink" aria-hidden />
+                    <span className="h-3 w-3 rounded-full bg-volt" aria-hidden />
                     Finish
                   </li>
                 </ul>
@@ -151,8 +163,8 @@ export default async function ActivityPage({ params, searchParams }: Props) {
           ) : null}
         </div>
 
-        <div className="flex flex-col gap-3">
-          <Panel title="Reacties" aside={<span className="num text-[12px]">{comments.length}</span>}>
+        <div className="flex flex-col gap-4">
+          <Panel title="Reacties" aside={<span className="num text-[14px]">{comments.length}</span>}>
             <div id="reacties" className="flex scroll-mt-4 flex-col gap-4">
               {comments.length === 0 ? <Empty>Nog geen reacties.</Empty> : null}
               {comments.map((comment) => (
@@ -163,12 +175,12 @@ export default async function ActivityPage({ params, searchParams }: Props) {
                       <Link href={`/u/${comment.user.username}`} className="font-medium hover:underline">
                         {comment.user.displayName}
                       </Link>
-                      <span className="text-[12px] text-muted">{formatWhen(comment.createdAt, timeZone)}</span>
+                      <span className="text-[14px] text-muted">{formatWhen(comment.createdAt, timeZone)}</span>
                     </p>
                     <p className="whitespace-pre-line break-words">{comment.body}</p>
                     {viewer && (viewer.id === comment.user.id || isOwner) ? (
                       <form action={deleteCommentAction.bind(null, comment.id)}>
-                        <ConfirmSubmit message="Deze reactie verwijderen?" className="mt-0.5 text-[12px] text-muted underline-offset-2 hover:text-negative hover:underline">
+                        <ConfirmSubmit message="Deze reactie verwijderen?" className="mt-0.5 cursor-pointer text-[14px] text-quiet underline-offset-2 hover:text-negative hover:underline">
                           Verwijderen
                         </ConfirmSubmit>
                       </form>

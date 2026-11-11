@@ -21,7 +21,7 @@ export function FeedList({
   const [pending, startTransition] = useTransition();
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="stagger flex flex-col gap-4">
       {items.map((activity) => (
         <ActivityCard key={activity.id} activity={activity} timeZone={timeZone} viewerId={viewerId} />
       ))}

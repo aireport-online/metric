@@ -6,8 +6,8 @@ export default function Loading() {
         <div className="skeleton h-8 w-40" />
         <div className="skeleton mt-2 h-5 w-72 max-w-full" />
       </div>
-      <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_364px]">
-        <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="flex flex-col gap-4">
           {[0, 1, 2].map((i) => (
             <div key={i} className="panel p-5">
               <div className="flex gap-3">
