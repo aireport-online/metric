@@ -37,6 +37,9 @@ struct RecordView: View {
         .navigationBarTitleDisplayMode(recorder.isActive ? .inline : .large)
         .sensoryFeedback(.impact(weight: .light), trigger: countdown)
         .sensoryFeedback(.impact(weight: .heavy), trigger: startShots)
+        .onChange(of: startShots) { _, _ in
+            SoundPlayer.shared.play(.start)
+        }
         .sheet(item: $saved) { record in
             FinishSummaryView(record: record) {
                 saved = nil
@@ -386,6 +389,7 @@ struct FinishSummaryView: View {
         .sensoryFeedback(.success, trigger: finishes)
         .onAppear {
             finishes += 1
+            SoundPlayer.shared.play(.finish)
         }
     }
 }

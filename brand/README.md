@@ -223,17 +223,25 @@ overgangen worden een fade van 120 ms en de live-stip staat stil. Haptiek en gel
 
 ## Geluid
 
-Drie korte geluiden, gegenereerd met ElevenLabs Sound Effects (in de flow, zie boven):
+Drie korte geluiden, gegenereerd met ElevenLabs Sound Effects en daarna ingekort. Elk geluid staat er als `.caf`
+(PCM 16-bit, mono, 44,1 kHz, voor iOS en watchOS) en als `.mp3` (128 kbit/s, mono, voor het web).
 
-| Moment | Omschrijving | Generatie |
-| --- | --- | --- |
-| Start opname | Droge, stijgende startpiep | `TTYE6Sp2sNTm8MeXrK2f` (2 s) |
-| Opname klaar | Heldere chime van twee tonen met een zachte lage tik | `ZZTV8JI3FlIueeabfafH` (1 s) |
-| Kudos | Korte, veerkrachtige pop | `YDOdKfNoI4XvlcWbGsJ6` (2 s) |
+| Moment | Omschrijving | Bestanden | Duur | Piek |
+| --- | --- | --- | --- | --- |
+| Start opname | Droge, stijgende startpiep | `sounds/start.caf`, `sounds/start.mp3` | 1,0 s | −4,0 dB |
+| Opname klaar | Heldere chime met een zachte lage tik | `sounds/finish.caf`, `sounds/finish.mp3` | 0,7 s | −6,5 dB |
+| Kudos | Korte, veerkrachtige pop | `sounds/kudos.caf`, `sounds/kudos.mp3` | 0,3 s | −3,7 dB |
 
-De bestanden staan nog niet in de repo en zijn niet beluisterd: de downloadhost `elevenlabsusercontent.com` wordt
-door het netwerkbeleid van deze omgeving geblokkeerd. Download ze uit de flow naar `brand/sounds/` (en kort ze in tot
-hooguit een seconde) voordat ze in de apps komen.
+Bewerking ten opzichte van de originelen in `sounds/origineel/`:
+
+- **Start** was 2,04 s, een toon die steeds luider wordt. Hij is twee keer zo snel afgespeeld met behoud van
+  toonhoogte en afgekapt op 1,0 s met een fade-out van 0,1 s.
+- **Finish** was 1,04 s, waarvan na 0,6 s alleen nog stilte. Afgekapt op 0,7 s met een fade-out van 0,15 s.
+- **Kudos** was 2,04 s, waarvan 1,8 s stilte. Afgekapt op 0,3 s met een fade-out van 0,1 s.
+
+De geluiden zijn **niet beluisterd**, alleen gemeten (duur, formaat, luidheidsverloop). Luister ze na voordat ze in
+de apps komen; vooral de versnelde startpiep kan anders klinken dan bedoeld. Geluid is nooit de enige terugkoppeling:
+er is altijd ook beeld en, op iOS, een haptische tik.
 
 ## Beeldtaal
 
@@ -241,15 +249,16 @@ Fotografeer de baan zelf: tartan, krijtlijnen, baannummers, startblokken, schijn
 lange schaduwen, bij nacht of schemer. Mensen klein, van boven of van achteren, in beweging, zonder herkenbaar gezicht.
 Volt alleen als klein detail (schoenen, veter). Geen stockfoto's van lachende sporters, geen merklogo's, geen pastel.
 
-| Beeld | Voor | Voorbeeld (512 px) | Generatie |
-| --- | --- | --- | --- |
-| Baanbocht bij nacht | Startpagina; donkere ruimte rechts voor een kop | `images/baan-bocht-nacht-preview.jpg` | `LfGQOaC5lKbNkvBLyP0y` |
-| Startlijn bij schemer | Lege toestanden ("nog niets opgenomen") | `images/startlijn-schemer-preview.jpg` | `JriRKVuJ2HK1DjNEtDdY` |
-| Tartan van dichtbij | Achtergrond en accenten | `images/tartan-textuur-preview.jpg` | `bdEI8lxJWP982n5KLwIc` |
+| Beeld | Voor | Bestanden |
+| --- | --- | --- |
+| Baanbocht bij nacht | Startpagina; donkere ruimte rechts voor een kop | `images/baan-bocht-nacht.jpg` |
+| Startlijn bij schemer | Lege toestanden ("nog niets opgenomen") | `images/startlijn-schemer.jpg` |
+| Tartan van dichtbij | Achtergrond en accenten | `images/tartan-textuur.jpg` |
 
-De bestanden in `images/` zijn verkleinde voorbeelden van 512 px breed. De originelen (1280 × 720) staan in de
-brand kit; ook die konden hier niet worden gedownload. Gebruik de voorbeelden hooguit klein; voor een schermvullend
-beeld is het origineel nodig.
+Per beeld staat er een webversie (JPEG, 1280 × 720, 145 tot 289 kB) en een voorbeeld van 512 px
+(`…-preview.jpg`); de PNG-originelen staan alleen in de ElevenLabs brand kit. De beelden zijn 1280 px breed;
+op een groot scherm schermvullend gebruikt worden ze zichtbaar zacht, dus zet er dan een donkere laag overheen of
+houd ze kleiner.
 
 ## Tone of voice
 
@@ -268,6 +277,6 @@ Nederlands, je-vorm. Direct en aanmoedigend, als een trainingsmaat die naast je 
   tone of voice), het beeldmerk en drie sfeerbeelden.
 - Elf generaties in één flow: twee logo-verkenningen (vector), zes sfeerbeelden (drie onderwerpen, elk twee varianten)
   en drie geluiden.
-- Niet gelukt: bestanden downloaden (host geblokkeerd), het definitieve vectorlogo en de lettertypen naar de brand kit
-  uploaden (daar was in deze sessie geen upload voor beschikbaar). In de brand kit staat daarom de logo-verkenning,
-  en de typografie staat er als regels in.
+- De gekozen beelden en de drie geluiden zijn gedownload naar `images/` en `sounds/`.
+- Niet gelukt: het definitieve vectorlogo en de lettertypen naar de brand kit uploaden (daar was in deze sessie geen
+  upload voor beschikbaar). In de brand kit staat daarom de logo-verkenning, en de typografie staat er als regels in.

@@ -218,6 +218,9 @@ struct KudosButton: View {
         .animation(Theme.Motion.quick, value: count)
         .animation(Theme.Motion.quick, value: hasKudoed)
         .sensoryFeedback(.impact(weight: .light), trigger: hasKudoed)
+        .onChange(of: hasKudoed) { _, isOn in
+            if isOn { SoundPlayer.shared.play(.kudos) }
+        }
         .accessibilityLabel(hasKudoed ? "Kudos intrekken" : "Geef kudos")
         .accessibilityValue("\(count) kudos")
     }

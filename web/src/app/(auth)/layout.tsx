@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
@@ -21,7 +22,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
       {/* The form on the left; on a wide screen the empty track waits on the right. */}
       <div className="grid flex-1 items-start gap-x-16 pb-16 pt-10 max-sm:pt-4 lg:grid-cols-[420px_minmax(0,1fr)]">
         <main className="rise w-full max-w-[420px] max-lg:mx-auto">{children}</main>
-        <div className="fade-in flex justify-center pt-14 max-lg:hidden" aria-hidden>
+        <div className="fade-in flex flex-col items-center gap-12 pt-14 max-lg:hidden" aria-hidden>
           <Track width={560} thickness={16} lanes={[{ progress: 1 }, { progress: 0.72 }, { progress: 0.45 }]} label="">
             <span className="figure-xl text-[52px]">
               Elke week
@@ -29,6 +30,14 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
               een ronde.
             </span>
           </Track>
+          <Image
+            src="/images/startlijn-schemer.jpg"
+            alt=""
+            width={1280}
+            height={720}
+            unoptimized
+            className="w-full max-w-[560px] rounded-[20px]"
+          />
         </div>
       </div>
       <Suspense>

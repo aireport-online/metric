@@ -16,6 +16,8 @@ struct ProfileView: View {
     @State private var confirmDelete = false
     @State private var deletePassword = ""
 
+    @AppStorage(SoundPlayer.enabledKey) private var soundsEnabled = true
+
     private var hasChanges: Bool {
         guard let me = app.me else { return false }
         return displayName != me.displayName
@@ -186,6 +188,18 @@ struct ProfileView: View {
                 }
             } header: {
                 SectionHeader("Synchronisatie")
+            }
+            .metricRow()
+
+            Section {
+                Toggle("Geluiden", isOn: $soundsEnabled)
+                    .tint(Theme.tartan)
+            } header: {
+                SectionHeader("Geluid")
+            } footer: {
+                Text("Startschot, finish en kudos. Volgt de stille-schakelaar van je iPhone.")
+                    .font(.metricText(13))
+                    .foregroundStyle(Theme.textSecondary)
             }
             .metricRow()
 
