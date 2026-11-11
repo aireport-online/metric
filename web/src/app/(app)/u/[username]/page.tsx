@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { acceptFriendRequestAction, deleteFriendRequestAction, sendFriendRequestAction } from "@/app/actions/friends";
 import { ActionButton } from "@/components/action-button";
 import { ActivityCard } from "@/components/activity-card";
@@ -26,6 +27,7 @@ async function loadProfile(viewerId: string | null, username: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  await connection();
   const { username } = await params;
   const profile = await loadProfile(null, username);
   if (!profile) return { title: "Profiel", robots: { index: false } };

@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { loadOwnActivitiesAction } from "@/app/actions/activities";
-import { ACTIVITY_INFO, VISIBILITY_LABEL } from "@/lib/activity-types";
+import { ACTIVITY_INFO, SOURCE_LABEL, VISIBILITY_LABEL, activityTitle } from "@/lib/activity-types";
 import { formatClock, formatCount, formatKm, formatRate, formatWhen } from "@/lib/format";
 import type { ActivityDto } from "@/server/serialize";
-import { activityTitle } from "./activity-card";
 
 const dash = <span className="text-muted">–</span>;
 
@@ -36,7 +35,7 @@ export function ActivityTable({
             <th className="num h-10 px-3 text-right font-normal max-sm:pr-4">Duur</th>
             <th className="num h-10 px-3 text-right font-normal max-sm:hidden">Afstand</th>
             <th className="num h-10 px-3 text-right font-normal max-md:hidden">Tempo</th>
-            <th className="h-10 pl-3 pr-5 text-left font-normal max-md:hidden">Zichtbaar voor</th>
+            <th className="h-10 pl-3 pr-5 text-right font-normal max-md:hidden">Zichtbaar voor</th>
           </tr>
         </thead>
         <tbody>
@@ -49,8 +48,8 @@ export function ActivityTable({
                   <Link href={`/activities/${activity.id}`} className="font-medium hover:underline">
                     {activityTitle(activity)}
                   </Link>
-                  <div className="text-[12px] leading-5 text-muted">
-                    {ACTIVITY_INFO[activity.type].label}
+                  <div className="text-[13px] leading-5 text-muted sm:text-[12px]">
+                    {activity.title ? ACTIVITY_INFO[activity.type].label : `via ${SOURCE_LABEL[activity.source]}`}
                     <span className="sm:hidden">
                       {" · "}
                       {formatWhen(activity.startedAt, timeZone)}
@@ -78,7 +77,7 @@ export function ActivityTable({
                     dash
                   )}
                 </td>
-                <td className="whitespace-nowrap pl-3 pr-5 text-muted max-md:hidden">{VISIBILITY_LABEL[activity.visibility]}</td>
+                <td className="whitespace-nowrap pl-3 pr-5 text-right text-muted max-md:hidden">{VISIBILITY_LABEL[activity.visibility]}</td>
               </tr>
             );
           })}

@@ -29,3 +29,25 @@ export const SOURCE_LABEL: Record<ActivitySource, string> = {
   health: "Apple Gezondheid",
   web: "website",
 };
+
+/**
+ * The title someone gave the activity. Without one, the activity is named after what it was:
+ * "7,07 km hardlopen" or "47 min krachttraining".
+ */
+export function activityTitle(activity: {
+  title: string;
+  type: ActivityType;
+  distanceMeters: number | null;
+  durationSeconds: number;
+}): string {
+  if (activity.title) return activity.title;
+  const sport = ACTIVITY_INFO[activity.type].label;
+  const what = sport === "HIIT" ? sport : sport.toLowerCase();
+  if (activity.distanceMeters && activity.distanceMeters >= 100) {
+    const km = new Intl.NumberFormat("nl-NL", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(
+      activity.distanceMeters / 1000,
+    );
+    return `${km} km ${what}`;
+  }
+  return `${Math.max(1, Math.round(activity.durationSeconds / 60))} min ${what}`;
+}

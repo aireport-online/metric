@@ -41,7 +41,7 @@ export default function StartPage() {
             <WeekGoal seconds={SAMPLE_WEEK_SECONDS} goalMinutes={SAMPLE_GOAL} days={SAMPLE_DAYS} />
           </Panel>
           <Panel title="Minuten per week">
-            <WeekColumns weeks={SAMPLE_WEEKS} goalMinutes={SAMPLE_GOAL} height={176} />
+            <WeekColumns weeks={SAMPLE_WEEKS} goalMinutes={SAMPLE_GOAL} height={212} table={false} />
           </Panel>
           <article className="panel p-5 sm:col-span-2">
             <div className="flex items-start gap-3">

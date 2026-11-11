@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { setKudosAction } from "@/app/actions/activities";
-import { ACTIVITY_INFO } from "@/lib/activity-types";
+import { ACTIVITY_INFO, activityTitle } from "@/lib/activity-types";
 import { formatClock, formatKm, formatRate, formatWhen } from "@/lib/format";
 import type { ActivityDto } from "@/server/serialize";
 import { CommentIcon, KudosIcon } from "./icons";
@@ -63,10 +63,6 @@ export function KudosButton({
   );
 }
 
-export function activityTitle(activity: Pick<ActivityDto, "title" | "type">) {
-  return activity.title || ACTIVITY_INFO[activity.type].label;
-}
-
 export function ActivityFigures({ activity }: { activity: ActivityDto }) {
   const rate = formatRate(activity.type, activity.distanceMeters, activity.durationSeconds);
   return (
@@ -114,7 +110,7 @@ export function ActivityCard({
           </h2>
         </div>
         {activity.routePreview ? (
-          <Link href={href} tabIndex={-1} aria-hidden className="max-[420px]:hidden">
+          <Link href={href} tabIndex={-1} aria-hidden className="flex-none">
             <RouteThumb route={activity.routePreview} />
           </Link>
         ) : null}

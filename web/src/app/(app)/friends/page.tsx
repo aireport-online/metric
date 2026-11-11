@@ -29,15 +29,24 @@ const RELATION_NOTE: Record<Exclude<Relation, "none" | "incoming">, string> = {
   outgoing: "Verzoek verstuurd",
 };
 
-function Person({ user, children }: { user: { username: string; displayName: string }; children?: React.ReactNode }) {
+function Person({
+  user,
+  children,
+  wrap = false,
+}: {
+  user: { username: string; displayName: string };
+  children?: React.ReactNode;
+  /** Lets the actions drop to a second line when the name and two buttons do not fit. */
+  wrap?: boolean;
+}) {
   return (
-    <li className="flex min-h-12 items-center gap-3 border-t border-rule py-2 first:border-t-0">
+    <li className={`flex min-h-12 items-center gap-x-3 gap-y-2 border-t border-rule py-2 first:border-t-0 ${wrap ? "flex-wrap" : ""}`}>
       <Avatar username={user.username} name={user.displayName} size={32} />
-      <Link href={`/u/${user.username}`} className="min-w-0 flex-1 hover:underline">
+      <Link href={`/u/${user.username}`} className={`min-w-0 flex-1 hover:underline ${wrap ? "basis-32" : ""}`}>
         <span className="block truncate font-medium">{user.displayName}</span>
         <span className="block truncate text-[12px] leading-4 text-muted">@{user.username}</span>
       </Link>
-      <div className="flex flex-none items-center gap-2">{children}</div>
+      <div className={`flex flex-none items-center gap-2 ${wrap ? "ml-auto" : ""}`}>{children}</div>
     </li>
   );
 }
@@ -116,7 +125,7 @@ export default async function FriendsPage({ searchParams }: PageProps<"/friends"
             <Panel title="Verzoeken" aside={incoming.length > 0 ? <span className="num text-[12px]">{incoming.length} nieuw</span> : null}>
               <ul>
                 {incoming.map((request) => (
-                  <Person key={request.id} user={request.user}>
+                  <Person key={request.id} user={request.user} wrap>
                     <ActionButton action={acceptFriendRequestAction.bind(null, request.id)} className="btn btn-sm btn-primary">
                       Accepteren
                     </ActionButton>

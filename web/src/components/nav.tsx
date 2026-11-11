@@ -19,10 +19,12 @@ const isActive = (pathname: string, href: string) => pathname === href || pathna
 
 export function Nav({ user, requests, logout }: { user: NavUser; requests: number; logout: () => Promise<void> }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  // The sheet remembers the page it was opened on, so navigating anywhere closes it by itself.
+  const [openedOn, setOpenedOn] = useState<string | null>(null);
+  const open = openedOn === pathname;
+  const setOpen = (next: boolean) => setOpenedOn(next ? pathname : null);
 
-  // Close the sheet after navigating and keep the page behind it from scrolling.
-  useEffect(() => setOpen(false), [pathname]);
+  // Keep the page behind the sheet from scrolling.
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => {

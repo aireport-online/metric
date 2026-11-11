@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { z } from "zod";
 import { deleteCommentAction } from "@/app/actions/activities";
-import { activityTitle, KudosButton } from "@/components/activity-card";
+import { KudosButton } from "@/components/activity-card";
 import { CommentForm, EditActivityForm } from "@/components/activity-forms";
 import { ConfirmSubmit, CopyButton } from "@/components/client-bits";
 import { RouteMap } from "@/components/route-map";
 import { Avatar, Empty, Panel } from "@/components/ui";
-import { ACTIVITY_INFO, SOURCE_LABEL, VISIBILITY_LABEL } from "@/lib/activity-types";
+import { ACTIVITY_INFO, SOURCE_LABEL, VISIBILITY_LABEL, activityTitle } from "@/lib/activity-types";
 import { formatClock, formatCount, formatFullDate, formatKm, formatRate, formatWhen } from "@/lib/format";
 import { getActivityDetail } from "@/server/activities";
 import { ApiError } from "@/server/errors";
@@ -30,6 +31,8 @@ async function loadDetail(viewerId: string | null, id: string) {
 
 /** Link previews are built from what anyone may see, so only public activities get a real title. */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  // Always looked up for the request at hand; an activity can change visibility at any moment.
+  await connection();
   const { id } = await params;
   const detail = await loadDetail(null, id);
   if (!detail) return { title: "Activiteit", robots: { index: false } };
@@ -78,21 +81,21 @@ export default async function ActivityPage({ params, searchParams }: Props) {
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4 pb-6 pt-8 max-sm:pt-5">
         <div className="min-w-0">
           <h1 className="text-[24px] font-bold leading-8 tracking-[-0.01em]">{activityTitle(activity)}</h1>
-          <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-muted">
+          <p className="mt-2 flex items-center gap-2">
             <Avatar username={activity.user.username} name={activity.user.displayName} size={24} />
-            <Link href={`/u/${activity.user.username}`} className="font-medium text-ink hover:underline">
+            <Link href={`/u/${activity.user.username}`} className="font-medium hover:underline">
               {activity.user.displayName}
             </Link>
-            <span>
-              · {info.label} · <time dateTime={activity.startedAt}>{formatFullDate(activity.startedAt, timeZone)}</time> · via{" "}
-              {SOURCE_LABEL[activity.source]}
-            </span>
+          </p>
+          <p className="mt-1 text-muted">
+            {info.label} · <time dateTime={activity.startedAt}>{formatFullDate(activity.startedAt, timeZone)}</time> · via{" "}
+            {SOURCE_LABEL[activity.source]}
           </p>
         </div>
-        <div className="flex flex-none flex-wrap items-center gap-2">
+        <div className="flex max-w-full flex-wrap items-center gap-2">
           <KudosButton activityId={activity.id} count={activity.kudosCount} on={activity.hasKudoed} canKudo={viewer !== null} size="md" />
           {activity.visibility === "public" || isOwner ? (
-            <CopyButton value={shareUrl} label={activity.visibility === "public" ? "Kopieer link" : "Kopieer link (niet openbaar)"} />
+            <CopyButton value={shareUrl} />
           ) : null}
           {isOwner && !editing ? (
             <Link href={`/activities/${activity.id}?edit`} className="btn btn-secondary">
@@ -122,7 +125,21 @@ export default async function ActivityPage({ params, searchParams }: Props) {
           ) : null}
 
           {activity.route && activity.route.length >= 2 ? (
-            <Panel title="Route" aside={<span className="text-[12px]">open rondje = start, dicht rondje = finish</span>}>
+            <Panel
+              title="Route"
+              aside={
+                <ul className="flex items-center gap-4 text-[12px]">
+                  <li className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full border-2 border-ink bg-surface" aria-hidden />
+                    Start
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-ink" aria-hidden />
+                    Finish
+                  </li>
+                </ul>
+              }
+            >
               <RouteMap route={activity.route} label={`Route van ${activityTitle(activity)}`} />
             </Panel>
           ) : null}

@@ -2,7 +2,7 @@
  * Fills the database with demo people and about twelve weeks of activities, so every screen has
  * something to show. Safe to run again: it removes the demo accounts first.
  *
- *   npm run db:seed      → log in as sanne@example.com / metric-demo
+ *   npm run db:seed      → log in as sanne@metric.test / metric-demo
  */
 import { config } from "dotenv";
 import { inArray } from "drizzle-orm";
@@ -202,7 +202,7 @@ async function main() {
   const accounts = new Map<string, UserRow>();
   for (const person of PEOPLE) {
     const user = await registerUser({
-      email: `${person.username}@example.com`,
+      email: `${person.username}@metric.test`,
       password: PASSWORD,
       username: person.username,
       displayName: person.displayName,
@@ -281,7 +281,7 @@ async function main() {
 
   await getPool().end();
   console.log(`Seeded ${PEOPLE.length} people and ${count} activities.`);
-  console.log(`Log in as sanne@example.com (or daan, noor, lars, emma, tim) with password "${PASSWORD}".`);
+  console.log(`Log in as sanne@metric.test (or daan, noor, lars, emma, tim) with password "${PASSWORD}".`);
 }
 
 main().catch((error) => {

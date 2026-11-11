@@ -28,7 +28,9 @@ export function LeaderboardList({ board, limit }: { board: Leaderboard; limit?: 
             />
           ) : null}
           <span className="num relative w-4 flex-none text-right text-muted">{entry.rank}</span>
-          <Avatar username={entry.user.username} name={entry.user.displayName} size={24} />
+          <span className="relative flex flex-none">
+            <Avatar username={entry.user.username} name={entry.user.displayName} size={24} />
+          </span>
           <Link href={`/u/${entry.user.username}`} className={`relative min-w-0 flex-1 truncate hover:underline ${entry.isMe ? "font-medium" : ""}`}>
             {entry.user.displayName}
             {entry.isMe ? <span className="font-normal text-muted"> (jij)</span> : null}

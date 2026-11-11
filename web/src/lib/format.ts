@@ -114,6 +114,11 @@ export function toLocalInputValue(date: Date, timeZone: string): string {
   return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
 }
 
+/** Default start for a manually added activity: half an hour ago, the usual "I just finished". */
+export function recentStartValue(timeZone: string, now = new Date()): string {
+  return toLocalInputValue(new Date(now.getTime() - 30 * 60 * 1000), timeZone);
+}
+
 /** Interprets "2026-11-11T07:30" as wall-clock time in `timeZone` and returns the instant. */
 export function fromLocalInputValue(value: string, timeZone: string): Date | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value);
@@ -133,9 +138,10 @@ export function fromLocalInputValue(value: string, timeZone: string): Date | nul
 
 /** Stable pale tint per person, so the same friend always has the same colour. */
 export function personHue(username: string): number {
-  let hash = 0;
-  for (const char of username) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  return (hash % 6) * 60 + 20;
+  // FNV-1a, so that short names that differ by one letter still land far apart.
+  let hash = 0x811c9dc5;
+  for (const char of username) hash = Math.imul(hash ^ char.charCodeAt(0), 0x01000193) >>> 0;
+  return (hash % 12) * 30;
 }
 
 export const initialOf = (name: string) => (name.trim()[0] ?? "?").toUpperCase();

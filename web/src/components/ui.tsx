@@ -11,7 +11,7 @@ export function Avatar({ username, name, size = 32 }: { username: string; name: 
       style={{
         width: size,
         height: size,
-        fontSize: Math.round(size * 0.42),
+        fontSize: Math.max(11, Math.round(size * 0.42)),
         background: `hsl(${hue} 55% 91%)`,
         color: `hsl(${hue} 45% 24%)`,
       }}
@@ -28,7 +28,7 @@ export function PageTitle({ title, sub, action }: { title: ReactNode; sub?: Reac
         <h1 className="text-[24px] font-bold leading-8 tracking-[-0.01em]">{title}</h1>
         {sub ? <p className="mt-1 text-muted">{sub}</p> : null}
       </div>
-      {action ? <div className="flex flex-none items-center gap-2">{action}</div> : null}
+      {action ? <div className="flex max-w-full flex-wrap items-center gap-2">{action}</div> : null}
     </header>
   );
 }
@@ -49,9 +49,9 @@ export function Panel({
   return (
     <section className={`panel ${className}`}>
       {title ? (
-        <div className="flex items-center justify-between gap-3 px-5 pt-4">
-          <h2 className="text-[16px] font-medium leading-6">{title}</h2>
-          {aside ? <div className="flex-none text-muted">{aside}</div> : null}
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-5 pt-4">
+          <h2 className="whitespace-nowrap text-[16px] font-medium leading-6">{title}</h2>
+          {aside ? <div className="max-w-full flex-none text-muted">{aside}</div> : null}
         </div>
       ) : null}
       <div className={flush ? "" : "p-5 pt-3"}>{children}</div>

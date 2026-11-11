@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { SESSION_COOKIE, TZ_COOKIE } from "@/lib/constants";
 import { createSession, deleteSession, getUserForToken } from "./auth";
 import type { UserRow } from "./db/schema";
@@ -10,6 +11,9 @@ import { resolveTimeZone } from "./timezone";
 /** The logged-in user for this request, or null. Deduplicated per request. */
 export const getSessionUser = cache(async (): Promise<UserRow | null> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  // A session is checked against the clock and the database, so it belongs to this request only
+  // and is never part of a prerendered shell.
+  await connection();
   return getUserForToken(token);
 });
 

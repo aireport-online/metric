@@ -15,13 +15,22 @@ export function minuteScale(maxMinutes: number): { top: number; ticks: number[] 
   return { top: count * step, ticks: Array.from({ length: count + 1 }, (_, i) => i * step) };
 }
 
-const tickLabel = (minutes: number) => (minutes >= 120 && minutes % 60 === 0 ? `${minutes / 60} u` : `${minutes}`);
-
 /**
  * Minutes per week as columns. The running week carries the hue, earlier weeks are grey context,
  * and the weekly goal is a dashed reference line labelled at its end.
  */
-export function WeekColumns({ weeks, goalMinutes, height = 200 }: { weeks: Week[]; goalMinutes: number; height?: number }) {
+export function WeekColumns({
+  weeks,
+  goalMinutes,
+  height = 200,
+  table = true,
+}: {
+  weeks: Week[];
+  goalMinutes: number;
+  height?: number;
+  /** The same numbers as a table, behind a disclosure. */
+  table?: boolean;
+}) {
   const [active, setActive] = useState<number | null>(null);
   const minutes = weeks.map((week) => toMinutes(week.durationSeconds));
   const { top, ticks } = minuteScale(Math.max(goalMinutes, ...minutes));
@@ -29,11 +38,11 @@ export function WeekColumns({ weeks, goalMinutes, height = 200 }: { weeks: Week[
   const labelEvery = weeks.length > 8 ? 3 : weeks.length > 4 ? 2 : 1;
 
   return (
-    <figure>
+    <figure className="@container">
       <div className="relative" style={{ height }} onMouseLeave={() => setActive(null)}>
         {ticks.map((tick) => (
           <div key={tick} className="absolute inset-x-0 flex items-center" style={{ bottom: `${(tick / top) * 100}%`, height: 0 }}>
-            <span className="num w-8 flex-none pr-2 text-right text-[12px] leading-none text-muted">{tickLabel(tick)}</span>
+            <span className="num w-8 flex-none pr-2 text-right text-[12px] leading-none text-muted">{tick}</span>
             <span className={`h-px flex-1 ${tick === 0 ? "bg-control" : "bg-grid"}`} />
           </div>
         ))}
@@ -87,7 +96,8 @@ export function WeekColumns({ weeks, goalMinutes, height = 200 }: { weeks: Week[
         {weeks.map((week, i) => (
           <span key={week.weekStart} className="relative h-4 flex-1 text-[12px] leading-4 text-muted">
             {(last - i) % labelEvery === 0 ? (
-              <span className={`absolute whitespace-nowrap ${i === last ? "right-0 text-ink" : i === 0 ? "left-0" : "left-1/2 -translate-x-1/2"}`}>
+              // In a narrow panel every other label is dropped, so the dates never run into each other.
+              <span className={`absolute whitespace-nowrap ${(last - i) % (labelEvery * 2) === 0 ? "" : "@max-[400px]:hidden"} ${i === last ? "right-0 text-ink" : i === 0 ? "left-0" : "left-1/2 -translate-x-1/2"}`}>
                 {formatWeekStart(week.weekStart)}
               </span>
             ) : null}
@@ -95,6 +105,7 @@ export function WeekColumns({ weeks, goalMinutes, height = 200 }: { weeks: Week[
         ))}
       </div>
 
+      {table ? (
       <details className="mt-3 text-[12px] text-muted">
         <summary className="inline-flex h-8 cursor-pointer items-center hover:text-ink">Toon als tabel</summary>
         <table className="num mt-1 w-full max-w-md text-[14px] text-ink">
@@ -118,6 +129,7 @@ export function WeekColumns({ weeks, goalMinutes, height = 200 }: { weeks: Week[
           </tbody>
         </table>
       </details>
+      ) : null}
     </figure>
   );
 }

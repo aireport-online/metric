@@ -29,6 +29,9 @@ export default async function DashboardPage() {
   const timeZone = await getTimeZone();
   const [stats, days] = await Promise.all([getStats(user, WEEKS, timeZone), getWeekDays(user.id, timeZone)]);
   const { thisWeek, totals } = stats;
+  // The foot of "Per sport" is the sum of the rows above it.
+  const periodSeconds = stats.byType.reduce((sum, sport) => sum + sport.durationSeconds, 0);
+  const periodCount = stats.byType.reduce((sum, sport) => sum + sport.count, 0);
   const weeksOnGoal = stats.weekly.filter((week) => toMinutes(week.durationSeconds) >= thisWeek.goalMinutes).length;
 
   return (
@@ -70,7 +73,7 @@ export default async function DashboardPage() {
         <Panel
           title="Minuten per week"
           aside={
-            <ul className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-[12px]">
+            <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">
               <li className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-[2px] bg-hue" aria-hidden />
                 Deze week
@@ -89,17 +92,25 @@ export default async function DashboardPage() {
           <p className="mb-5 text-muted">
             In {weeksOnGoal} van de laatste {WEEKS} weken haalde je het doel van {thisWeek.goalMinutes} minuten.
           </p>
-          <WeekColumns weeks={stats.weekly} goalMinutes={thisWeek.goalMinutes} height={232} />
+          <WeekColumns weeks={stats.weekly} goalMinutes={thisWeek.goalMinutes} height={284} />
         </Panel>
       </div>
 
       {/* 776 + 12 + 364 = 1152 */}
-      <div className="mt-3 grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_364px]">
-        <Panel title="Per sport" aside={<span className="text-[12px]">laatste {WEEKS} weken</span>}>
+      <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_364px]">
+        <Panel title="Per sport" aside={<span className="text-[12px]">laatste {WEEKS} weken</span>} className="flex flex-col [&>div:last-child]:flex [&>div:last-child]:flex-1 [&>div:last-child]:flex-col">
           {stats.byType.length === 0 ? (
             <Empty>Geen activiteiten in de laatste {WEEKS} weken.</Empty>
           ) : (
-            <SportList sports={stats.byType} />
+            <>
+              <SportList sports={stats.byType} />
+              <p className="num mt-auto flex items-baseline justify-between gap-3 border-t border-rule pt-3 text-muted">
+                <span>Alle sporten samen</span>
+                <span>
+                  <span className="text-ink">{formatHoursMinutes(periodSeconds)}</span> · {formatCount(periodCount)}×
+                </span>
+              </p>
+            </>
           )}
         </Panel>
         <Panel title="Totaal" aside={<span className="text-[12px]">sinds {formatMonthYear(user.createdAt.toISOString())}</span>}>

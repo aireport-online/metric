@@ -32,23 +32,26 @@ export function RouteMap({ route, label }: { route: Point[]; label: string }) {
   const height = 360;
   const { points, pixelsPerMeter } = project(route, width, height, 28);
   const d = points.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`).join("");
-  const [startX, startY] = points[0];
-  const [endX, endY] = points[points.length - 1];
   const meters = [...SCALE_STEPS].reverse().find((step) => step * pixelsPerMeter <= width * 0.25) ?? SCALE_STEPS[0];
-  const barWidth = meters * pixelsPerMeter;
+  const at = ([x, y]: Point) => ({ left: `${(x / width) * 100}%`, top: `${(y / height) * 100}%` });
 
+  // The line scales with the panel; the markers and the scale bar are laid over it in HTML so they
+  // keep their size and stay readable on a phone.
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label} className="block h-auto w-full rounded-control bg-[#f4f4f4]">
-      <path d={d} fill="none" stroke="var(--hue)" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={startX} cy={startY} r="5" fill="var(--surface)" stroke="var(--text)" strokeWidth="2" />
-      <circle cx={endX} cy={endY} r="5" fill="var(--text)" stroke="var(--surface)" strokeWidth="2" />
-      <g transform={`translate(16 ${height - 16})`}>
-        <path d={`M0 -5V0H${barWidth.toFixed(1)}V-5`} fill="none" stroke="var(--muted)" strokeWidth="1" />
-        <text x={barWidth + 6} y="0" fontSize="12" fill="var(--muted)">
-          {meters >= 1000 ? `${meters / 1000} km` : `${meters} m`}
-        </text>
-      </g>
-    </svg>
+    <div role="img" aria-label={label} className="relative overflow-hidden rounded-control bg-[#f4f4f4]">
+      <svg viewBox={`0 0 ${width} ${height}`} aria-hidden className="block h-auto w-full">
+        <path d={d} fill="none" stroke="var(--hue)" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      </svg>
+      <span className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-ink bg-surface" style={at(points[0])} />
+      <span
+        className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface bg-ink"
+        style={at(points[points.length - 1])}
+      />
+      <div className="absolute bottom-3 left-3 flex items-end gap-1.5 text-[12px] leading-none text-muted" style={{ right: 12 }}>
+        <span className="h-1.5 border-x border-b border-muted" style={{ width: `${((meters * pixelsPerMeter) / width) * 100}%` }} />
+        <span className="num">{meters >= 1000 ? `${meters / 1000} km` : `${meters} m`}</span>
+      </div>
+    </div>
   );
 }
 
@@ -57,7 +60,7 @@ export function RouteThumb({ route }: { route: Point[] }) {
   const { points } = project(route, 96, 72, 8);
   const d = points.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`).join("");
   return (
-    <svg width="96" height="72" viewBox="0 0 96 72" aria-hidden className="flex-none rounded-control bg-[#f4f4f4]">
+    <svg width="96" height="72" viewBox="0 0 96 72" aria-hidden className="flex-none rounded-control bg-[#f4f4f4] max-[420px]:h-[54px] max-[420px]:w-[72px]">
       <path d={d} fill="none" stroke="var(--text)" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   );

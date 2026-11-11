@@ -15,7 +15,7 @@ function Section({ title, description, children }: { title: string; description:
         <h2 className="text-[16px] font-medium leading-6">{title}</h2>
         <div className="mt-1 text-muted">{description}</div>
       </div>
-      <div className="rounded-card bg-surface p-5 ring-1 ring-line">{children}</div>
+      <div className="panel p-5">{children}</div>
     </section>
   );
 }
