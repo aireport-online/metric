@@ -11,8 +11,9 @@ async function RedirectWhenLoggedIn() {
 
 export default function AuthLayout({ children }: LayoutProps<"/">) {
   return (
+    // One centred column of 400px: the logo sits on the form's left edge.
     <div className="column flex min-h-screen flex-col">
-      <header className="flex h-12 flex-none items-center">
+      <header className="mx-auto flex h-12 w-full max-w-[400px] flex-none items-center">
         <Link href="/" aria-label="Metric, naar de startpagina">
           <Logo />
         </Link>

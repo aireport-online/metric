@@ -103,12 +103,15 @@ export function NewActivityForm({ defaultStart, defaultVisibility }: { defaultSt
 export function EditActivityForm({
   id,
   title,
+  fallbackTitle,
   notes,
   type,
   visibility,
 }: {
   id: string;
   title: string;
+  /** What the activity is called while it has no title of its own. */
+  fallbackTitle: string;
   notes: string;
   type: ActivityType;
   visibility: Visibility;
@@ -122,7 +125,7 @@ export function EditActivityForm({
           <label htmlFor="title" className="label">
             Titel
           </label>
-          <input id="title" name="title" maxLength={80} defaultValue={state?.values?.title ?? title} className="input" />
+          <input id="title" name="title" maxLength={80} defaultValue={state?.values?.title ?? title} placeholder={fallbackTitle} className="input" />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>

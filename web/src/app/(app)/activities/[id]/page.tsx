@@ -121,7 +121,7 @@ export default async function ActivityPage({ params, searchParams }: Props) {
           </section>
 
           {editing ? (
-            <EditActivityForm id={activity.id} title={activity.title} notes={activity.notes} type={activity.type} visibility={activity.visibility} />
+            <EditActivityForm id={activity.id} title={activity.title} fallbackTitle={activityTitle({ ...activity, title: "" })} notes={activity.notes} type={activity.type} visibility={activity.visibility} />
           ) : null}
 
           {activity.route && activity.route.length >= 2 ? (

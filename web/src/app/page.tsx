@@ -20,7 +20,7 @@ export default function StartPage() {
       {/* 480 + 48 + 624 = 1152 */}
       <main className="grid flex-1 items-center gap-x-12 gap-y-10 py-10 lg:grid-cols-[480px_minmax(0,1fr)]">
         <div>
-          <h1 className="text-[32px] font-bold leading-[1.15] tracking-[-0.02em]">Sport bijhouden met je vrienden</h1>
+          <h1 className="text-[32px] font-bold leading-[1.15] tracking-[-0.02em] max-sm:text-[26px]">Sport bijhouden met je vrienden</h1>
           <p className="mt-4 max-w-[44ch] text-[16px] leading-6">
             Metric verzamelt je workouts van iPhone en Apple Watch, laat zien of je je weekdoel haalt en deelt je
             voortgang met de vrienden die jij kiest.
@@ -41,7 +41,7 @@ export default function StartPage() {
             <WeekGoal seconds={SAMPLE_WEEK_SECONDS} goalMinutes={SAMPLE_GOAL} days={SAMPLE_DAYS} />
           </Panel>
           <Panel title="Minuten per week">
-            <WeekColumns weeks={SAMPLE_WEEKS} goalMinutes={SAMPLE_GOAL} height={212} table={false} />
+            <WeekColumns weeks={SAMPLE_WEEKS} goalMinutes={SAMPLE_GOAL} height={170} table={false} />
           </Panel>
           <article className="panel p-5 sm:col-span-2">
             <div className="flex items-start gap-3">

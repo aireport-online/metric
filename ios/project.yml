@@ -54,6 +54,10 @@ targets:
         MetricAPIBaseURL: $(METRIC_API_BASE_URL)
     entitlements:
       path: Metric/Metric.entitlements
+      # XcodeGen (re)writes the file from these properties on every generate.
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(METRIC_BUNDLE_ID)
@@ -86,6 +90,10 @@ targets:
         NSHealthUpdateUsageDescription: Metric bewaart de workouts die je op je Watch opneemt in Gezondheid.
     entitlements:
       path: MetricWatch/MetricWatch.entitlements
+      # XcodeGen (re)writes the file from these properties on every generate.
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(METRIC_BUNDLE_ID).watchkitapp
