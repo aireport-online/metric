@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { loadFeedAction } from "@/app/actions/activities";
 import { ActivityCard, type CardActivity } from "./activity-card";
+import { useMorePages } from "./use-more-pages";
 
 export function FeedList({
   initial,
@@ -15,8 +16,7 @@ export function FeedList({
   timeZone: string;
   viewerId: string;
 }) {
-  const [items, setItems] = useState(initial);
-  const [cursor, setCursor] = useState(initialCursor);
+  const { items, cursor, append } = useMorePages(initial, initialCursor);
   const [failed, setFailed] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -36,11 +36,7 @@ export function FeedList({
                 try {
                   const page = await loadFeedAction(cursor);
                   setFailed(false);
-                  setItems((current) => {
-                    const seen = new Set(current.map((item) => item.id));
-                    return [...current, ...page.activities.filter((item) => !seen.has(item.id))];
-                  });
-                  setCursor(page.nextCursor);
+                  append(page);
                 } catch {
                   setFailed(true);
                 }

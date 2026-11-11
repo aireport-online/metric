@@ -7,6 +7,7 @@ import { ACTIVITY_INFO, SOURCE_LABEL, VISIBILITY_LABEL, activityTitle } from "@/
 import { formatClock, formatCount, formatKm, formatRate, formatWhen } from "@/lib/format";
 import type { ActivityDto } from "@/server/serialize";
 import { SportIcon } from "./icons";
+import { useMorePages } from "./use-more-pages";
 
 const dash = <span className="text-muted">–</span>;
 
@@ -21,8 +22,7 @@ export function ActivityTable({
   total: number;
   timeZone: string;
 }) {
-  const [items, setItems] = useState(initial);
-  const [cursor, setCursor] = useState(initialCursor);
+  const { items, cursor, append } = useMorePages(initial, initialCursor);
   const [failed, setFailed] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -104,11 +104,7 @@ export function ActivityTable({
                 try {
                   const page = await loadOwnActivitiesAction(cursor);
                   setFailed(false);
-                  setItems((current) => {
-                    const seen = new Set(current.map((item) => item.id));
-                    return [...current, ...page.activities.filter((item) => !seen.has(item.id))];
-                  });
-                  setCursor(page.nextCursor);
+                  append(page);
                 } catch {
                   setFailed(true);
                 }

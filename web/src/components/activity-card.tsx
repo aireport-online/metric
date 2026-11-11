@@ -31,6 +31,12 @@ export function KudosButton({
   size?: "sm" | "md";
 }) {
   const [state, setState] = useState({ count, on });
+  // Fresh numbers from the server (after a refresh or coming back to this page) replace the local ones.
+  const [fromServer, setFromServer] = useState({ count, on });
+  if (fromServer.count !== count || fromServer.on !== on) {
+    setFromServer({ count, on });
+    setState({ count, on });
+  }
   const [optimistic, setOptimistic] = useOptimistic(state);
   const [presses, setPresses] = useState(0);
   const [, startTransition] = useTransition();
