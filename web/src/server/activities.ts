@@ -21,9 +21,22 @@ const listColumns = (viewerId: string | null, withRoute = false) => ({
     : sql<boolean>`false`,
 });
 
-async function selectActivities(viewerId: string | null, where: SQL | undefined, limit: number) {
+/** Thins a route to at most `max` points; enough for a thumbnail. */
+function routePreview(route: [number, number][] | null | undefined, max = 60): [number, number][] | null {
+  if (!route || route.length < 2) return null;
+  if (route.length <= max) return route;
+  const step = (route.length - 1) / (max - 1);
+  return Array.from({ length: max }, (_, i) => route[Math.round(i * step)]);
+}
+
+async function selectActivities(
+  viewerId: string | null,
+  where: SQL | undefined,
+  limit: number,
+  options: { withRoutePreview?: boolean } = {},
+) {
   const rows = await getDb()
-    .select(listColumns(viewerId))
+    .select(listColumns(viewerId, options.withRoutePreview))
     .from(activities)
     .innerJoin(users, eq(users.id, activities.userId))
     .where(where)
@@ -31,19 +44,25 @@ async function selectActivities(viewerId: string | null, where: SQL | undefined,
     .limit(limit + 1);
   const page = rows.slice(0, limit) as ActivityListRow[];
   return {
-    activities: page.map((row) => toActivity(row)),
+    activities: page.map((row) => ({
+      ...toActivity(row),
+      // Only the website asks for this; the API contract keeps routes out of lists.
+      ...(options.withRoutePreview ? { routePreview: routePreview(row.activity.route) } : {}),
+    })),
     nextCursor: rows.length > limit ? page[page.length - 1].activity.startedAt.toISOString() : null,
   };
 }
 
 const beforeCursor = (before?: Date) => (before ? lt(activities.startedAt, before) : undefined);
 
-export function listOwnActivities(userId: string, page: { before?: Date; limit: number }) {
-  return selectActivities(userId, and(eq(activities.userId, userId), beforeCursor(page.before)), page.limit);
+type PageOptions = { before?: Date; limit: number; withRoutePreview?: boolean };
+
+export function listOwnActivities(userId: string, page: PageOptions) {
+  return selectActivities(userId, and(eq(activities.userId, userId), beforeCursor(page.before)), page.limit, page);
 }
 
 /** My own activities plus what my friends share with friends or publicly. */
-export function listFeed(userId: string, page: { before?: Date; limit: number }) {
+export function listFeed(userId: string, page: PageOptions) {
   const visible = or(
     eq(activities.userId, userId),
     and(
@@ -51,7 +70,7 @@ export function listFeed(userId: string, page: { before?: Date; limit: number })
       sql`${activities.userId} in ${friendIdsOf(userId)}`,
     ),
   );
-  return selectActivities(userId, and(visible, beforeCursor(page.before)), page.limit);
+  return selectActivities(userId, and(visible, beforeCursor(page.before)), page.limit, page);
 }
 
 /** Activities of `owner` that `viewerId` (null = not logged in) is allowed to see. */
@@ -61,7 +80,11 @@ function visibleActivitiesOf(ownerId: string, relation: string): SQL | undefined
   return and(eq(activities.userId, ownerId), inArray(activities.visibility, [...allowed]));
 }
 
-export async function getProfile(viewerId: string | null, username: string) {
+export async function getProfile(
+  viewerId: string | null,
+  username: string,
+  options: { withRoutePreview?: boolean } = {},
+) {
   const db = getDb();
   const [user] = await db.select().from(users).where(eq(users.username, username.toLowerCase())).limit(1);
   if (!user) throw notFound("Deze gebruiker bestaat niet.");
@@ -77,7 +100,7 @@ export async function getProfile(viewerId: string | null, username: string) {
       })
       .from(activities)
       .where(where),
-    selectActivities(viewerId, where, 20),
+    selectActivities(viewerId, where, 20, { withRoutePreview: options.withRoutePreview }),
   ]);
 
   return { user: toPublicUser(user), relation, requestId, stats, activities: list.activities };

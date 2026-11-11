@@ -1,15 +1,21 @@
 {
-  "name": "web",
+  "name": "metric-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:seed": "tsx scripts/seed.ts",
+    "test": "vitest run",
+    "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",
+    "geist": "^1.9.2",
     "next": "16.4.6",
     "pg": "^8.23.1",
     "react": "19.3.0",

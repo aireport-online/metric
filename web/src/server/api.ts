@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 import { NextResponse, type NextRequest } from "next/server";
 import { z, ZodError } from "zod";
 import { SESSION_COOKIE } from "@/lib/constants";
@@ -40,6 +41,9 @@ function wrap<U>(resolveUser: (user: UserRow | null) => U, handler: Handler<U>) 
       const user = resolveUser(await getUserForToken(token));
       return await handler({ req, params: await args.params, user, token });
     } catch (error) {
+      // Next's own control-flow errors (such as the signal that a route reads the request and
+      // cannot be prerendered) must reach the framework untouched.
+      unstable_rethrow(error);
       return errorResponse(error);
     }
   };

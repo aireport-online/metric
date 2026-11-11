@@ -99,6 +99,21 @@ export async function getStats(user: UserRow, weeks: number, tz: string) {
 }
 export type Stats = Awaited<ReturnType<typeof getStats>>;
 
+/** Seconds per day of the running week (Monday first), plus which of the seven days is today. */
+export async function getWeekDays(userId: string, tz: string) {
+  const days = await rows<{ day: string; duration_seconds: number; is_today: boolean }>(sql`
+    select to_char(d.day, 'YYYY-MM-DD') as day,
+           coalesce(sum(a.duration_seconds), 0)::int as duration_seconds,
+           d.day = (now() at time zone ${tz})::date as is_today
+    from (select (${currentWeek(tz)} + n)::date as day from generate_series(0, 6) n) d
+    left join activities a
+      on a.user_id = ${userId} and (a.started_at at time zone ${tz})::date = d.day
+    group by d.day
+    order by d.day`);
+  return days.map((d) => ({ day: d.day, durationSeconds: d.duration_seconds, isToday: d.is_today }));
+}
+export type WeekDays = Awaited<ReturnType<typeof getWeekDays>>;
+
 export type LeaderboardMetric = "duration" | "distance" | "count";
 
 /**

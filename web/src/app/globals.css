@@ -1,0 +1,204 @@
+@import "tailwindcss";
+
+/*
+ * Achromatic ledger: no colour in the chrome. Ink for figures, grey for comparison,
+ * and one hue (--hue) on the main data element of each screen.
+ */
+:root {
+  color-scheme: light;
+  --ground: #f8f8f8;
+  --surface: #ffffff;
+  --raised: #eeeeee;
+  --border: #e6e6e6;
+  --rule: #f0f0f0;
+  --control: #d4d4d4;
+  --text: #0a0a0a;
+  --muted: #6b6b6b;
+  --primary: #141414;
+  --hue: #1d5fbf;
+  --context: #8a8a8a;
+  --positive: #2e7d32;
+  --negative: #c4242a;
+  --grid: #e5e5e5;
+}
+
+@theme inline {
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-line: var(--border);
+  --color-rule: var(--rule);
+  --color-control: var(--control);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-hue: var(--hue);
+  --color-context: var(--context);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-grid: var(--grid);
+  --font-sans: var(--font-geist-sans), Inter, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --radius-card: 8px;
+  --radius-control: 6px;
+  --radius-chip: 4px;
+}
+
+html {
+  background: var(--ground);
+}
+
+body {
+  background: var(--ground);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+/*
+ * Page column: 1152px centred. Grid sums at full width (gap 12):
+ *   main + rail   776 + 12 + 364 = 1152
+ *   two halves    570 + 12 + 570 = 1152
+ *   settings      440 + 12 + 700 = 1152
+ */
+@utility column {
+  width: 100%;
+  max-width: 1200px; /* 1152 + 2 × 24 */
+  margin-inline: auto;
+  padding-inline: 24px;
+  @media (max-width: 640px) {
+    padding-inline: 16px;
+  }
+}
+
+@utility num {
+  font-variant-numeric: tabular-nums;
+}
+
+@layer components {
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: var(--radius-control);
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    flex: none;
+    cursor: pointer;
+    transition:
+      background-color 120ms,
+      border-color 120ms,
+      transform 80ms;
+  }
+  .btn:active {
+    transform: translateY(1px);
+  }
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    cursor: default;
+    opacity: 0.6;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: #ffffff;
+  }
+  .btn-primary:hover {
+    background: #2e2e2e;
+  }
+  .btn-secondary {
+    background: #e5e5e5;
+    color: var(--text);
+  }
+  .btn-secondary:hover {
+    background: #dadada;
+  }
+  .btn-outline {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--control);
+  }
+  .btn-outline:hover {
+    border-color: #a3a3a3;
+  }
+  .btn-danger {
+    background: var(--surface);
+    color: var(--negative);
+    border: 1px solid var(--control);
+  }
+  .btn-danger:hover {
+    border-color: var(--negative);
+  }
+  .btn-sm {
+    height: 32px;
+    padding: 0 12px;
+  }
+  .btn-on {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+  }
+
+  .link {
+    color: var(--text);
+    font-weight: 500;
+    text-underline-offset: 3px;
+  }
+  .link:hover {
+    text-decoration: underline;
+  }
+
+  .input {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    background: var(--surface);
+    border: 1px solid var(--control);
+    border-radius: var(--radius-control);
+    font-size: 14px;
+    color: var(--text);
+  }
+  textarea.input {
+    height: auto;
+    padding: 10px 12px;
+    line-height: 20px;
+    resize: vertical;
+  }
+  .input::placeholder {
+    color: var(--muted);
+  }
+  .input:hover {
+    border-color: #a3a3a3;
+  }
+  .label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .skeleton {
+    background: var(--raised);
+    border-radius: var(--radius-chip);
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
