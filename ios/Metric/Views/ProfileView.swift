@@ -31,19 +31,51 @@ struct ProfileView: View {
 
     var body: some View {
         Form {
-            Section("Profiel") {
+            if let me = app.me {
+                Section {
+                    HStack(spacing: 14) {
+                        UserAvatar(name: me.displayName, size: 56)
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(me.displayName)
+                                .font(.metricHeading(30))
+                            Text("@\(me.username)")
+                                .font(.metricText(14))
+                                .foregroundStyle(Theme.textMuted)
+                        }
+                    }
+                    .padding(.vertical, 6)
+                }
+                .metricRow()
+            }
+
+            Section {
                 TextField("Naam", text: $displayName)
                 TextField("Bio", text: $bio, axis: .vertical)
                     .lineLimit(1...4)
                 if let me = app.me {
-                    LabeledContent("Gebruikersnaam", value: "@\(me.username)")
-                    LabeledContent("E-mailadres", value: me.email)
+                    LabeledContent("E-mailadres") {
+                        Text(me.email)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
                 }
+            } header: {
+                SectionHeader("Profiel")
             }
+            .metricRow()
 
             Section {
-                Stepper(value: $goalMinutes, in: 30...1200, step: 15) {
-                    LabeledContent("Weekdoel", value: "\(goalMinutes) min")
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Weekdoel")
+                        Spacer()
+                        FigureText(value: "\(goalMinutes)", unit: "min", size: 32, tint: Theme.tartan)
+                            .contentTransition(.numericText())
+                            .animation(Theme.Motion.quick, value: goalMinutes)
+                    }
+                    Stepper("Weekdoel aanpassen", value: $goalMinutes, in: 30...1200, step: 15)
+                        .labelsHidden()
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .sensoryFeedback(.selection, trigger: goalMinutes)
                 }
                 Picker("Nieuwe activiteiten zichtbaar voor", selection: $visibility) {
                     ForEach(ActivityVisibility.allCases) { visibility in
@@ -51,10 +83,13 @@ struct ProfileView: View {
                     }
                 }
             } header: {
-                Text("Doel en delen")
+                SectionHeader("Doel en delen")
             } footer: {
                 Text("Vrienden zien je activiteiten in hun feed. Met 'Iedereen met de link' kun je een activiteit ook buiten Metric delen.")
+                    .font(.metricText(13))
+                    .foregroundStyle(Theme.textMuted)
             }
+            .metricRow()
 
             if hasChanges {
                 Section {
@@ -63,21 +98,25 @@ struct ProfileView: View {
                     } label: {
                         if isSaving {
                             ProgressView()
+                                .tint(Theme.ink)
                         } else {
                             Text("Bewaar wijzigingen")
-                                .fontWeight(.semibold)
                         }
                     }
+                    .buttonStyle(PrimaryButtonStyle())
                     .disabled(isSaving || displayName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
                 }
             }
 
             if let message {
                 Section {
                     Text(message)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(.metricText(13))
+                        .foregroundStyle(Theme.textSecondary)
                 }
+                .metricRow()
             }
 
             if let profileURL {
@@ -87,13 +126,17 @@ struct ProfileView: View {
                     }
                 } footer: {
                     Text("Vrienden kunnen je via deze link vinden en een vriendschapsverzoek sturen.")
+                        .font(.metricText(13))
+                        .foregroundStyle(Theme.textMuted)
                 }
+                .metricRow()
             }
 
             if app.health.isAvailable {
-                Section("Apple Gezondheid") {
+                Section {
                     if app.healthEnabled {
                         Label("Gekoppeld", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(Theme.success)
                         Button("Workouts opnieuw importeren") {
                             runBusy {
                                 await app.reimportHealth()
@@ -108,23 +151,28 @@ struct ProfileView: View {
                         }
                         .disabled(isBusy)
                     }
+                } header: {
+                    SectionHeader("Apple Gezondheid")
                 }
+                .metricRow()
             }
 
-            Section("Synchronisatie") {
+            Section {
                 LabeledContent("Laatst bijgewerkt") {
                     if sync.isSyncing {
                         ProgressView()
                     } else if let date = sync.lastSyncedAt {
                         Text(date.formatted(date: .omitted, time: .shortened))
+                            .foregroundStyle(Theme.textSecondary)
                     } else {
                         Text("Nog niet")
+                            .foregroundStyle(Theme.textSecondary)
                     }
                 }
                 if let error = sync.lastErrorMessage {
                     Text(error)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(.metricText(13))
+                        .foregroundStyle(Theme.textSecondary)
                 }
                 Button("Nu synchroniseren") {
                     runBusy {
@@ -132,19 +180,30 @@ struct ProfileView: View {
                     }
                 }
                 .disabled(isBusy || sync.isSyncing)
-                LabeledContent("Server", value: app.serverURLString)
+                LabeledContent("Server") {
+                    Text(app.serverURLString)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+            } header: {
+                SectionHeader("Synchronisatie")
             }
+            .metricRow()
 
             Section {
                 Button("Log uit") {
                     confirmLogout = true
                 }
-                Button("Verwijder account", role: .destructive) {
+                Button(role: .destructive) {
                     deletePassword = ""
                     confirmDelete = true
+                } label: {
+                    Text("Verwijder account")
+                        .foregroundStyle(Theme.danger)
                 }
             }
+            .metricRow()
         }
+        .metricListBackground()
         .navigationTitle("Profiel")
         .onAppear {
             loadFromModel()

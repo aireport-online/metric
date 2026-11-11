@@ -72,6 +72,20 @@ op je Watch) automatisch geïmporteerd en gesynchroniseerd.
 - **Watch zonder login:** de iPhone doet alle communicatie met de server en stuurt de weekvoortgang
   naar de Watch.
 
+## Huisstijl
+
+De apps volgen de huisstijl in [`brand/`](../brand/README.md): altijd donker, tartan en volt als accenten, en de
+atletiekbaan als voortgangsmotief.
+
+- `Shared/Theme.swift` – kleuren, radii, beweging (duren, veren), lettertypen en de tint per sport.
+- `Shared/TrackProgressView.swift` – de baan: banen die linksom vollopen vanaf de startstreep.
+- `Shared/BrandComponents.swift` – knoppen, kaarten, optellende cijfers, binnenkomst van lijsten, live-stip en het
+  aftelcijfer van het startschot.
+- `Shared/Fonts/` – Barlow Condensed en Instrument Sans (OFL), geregistreerd via `UIAppFonts` in `project.yml`.
+- `Metric/App/Appearance.swift` – navigatiebalk, tabbalk en segmentkiezers in de huisstijl.
+
+Alle animaties houden rekening met "Verminder beweging": dan staat de eindtoestand er direct.
+
 ## Tests
 
 ```bash

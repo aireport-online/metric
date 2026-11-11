@@ -16,6 +16,7 @@ struct MetricApp: App {
         }
         self.container = container
         _app = StateObject(wrappedValue: AppModel(container: container))
+        Appearance.apply()
     }
 
     var body: some Scene {
@@ -23,6 +24,10 @@ struct MetricApp: App {
             RootView()
                 .environmentObject(app)
                 .environmentObject(app.sync)
+                .font(.metricText())
+                .foregroundStyle(Theme.text)
+                .tint(Theme.tartan)
+                .preferredColorScheme(.dark)
         }
         .modelContainer(container)
     }

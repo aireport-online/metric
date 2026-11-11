@@ -4,18 +4,38 @@ struct RootView: View {
     @EnvironmentObject private var app: AppModel
 
     var body: some View {
-        Group {
+        ZStack {
+            Theme.bg.ignoresSafeArea()
             if app.isRestoring {
-                ProgressView()
+                LaunchView()
+                    .transition(.opacity)
             } else if app.me == nil {
                 AuthView()
+                    .transition(.opacity)
             } else {
                 MainTabView()
+                    .transition(.opacity)
             }
         }
+        .animation(Theme.Motion.base, value: app.isRestoring)
+        .animation(Theme.Motion.base, value: app.me == nil)
         .task {
             await app.restoreSession()
         }
+    }
+}
+
+/// Het beeldmerk boven een baan die een ronde loopt terwijl de sessie wordt hersteld.
+private struct LaunchView: View {
+    var body: some View {
+        VStack(spacing: 24) {
+            Image("LogoMark")
+                .accessibilityHidden(true)
+            TrackProgressView(lanes: [TrackLane(progress: 1)], laneWidth: 6, aspect: 2.6)
+                .frame(width: 96)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Metric wordt geladen")
     }
 }
 
@@ -30,7 +50,7 @@ struct MainTabView: View {
             NavigationStack {
                 TodayView()
             }
-            .tabItem { Label("Vandaag", systemImage: "chart.bar.fill") }
+            .tabItem { Label("Vandaag", systemImage: "flag.checkered") }
             .tag(0)
 
             NavigationStack {
@@ -58,6 +78,7 @@ struct MainTabView: View {
             .tag(4)
         }
         .environmentObject(recorder)
+        .sensoryFeedback(.selection, trigger: selection)
         .task {
             await app.refreshAll()
         }

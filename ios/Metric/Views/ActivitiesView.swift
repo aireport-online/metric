@@ -14,19 +14,24 @@ struct ActivitiesView: View {
     var body: some View {
         Group {
             if records.isEmpty {
-                EmptyStateView(
-                    symbol: "figure.run",
-                    title: "Nog geen activiteiten",
-                    message: "Neem een workout op met je iPhone of Watch, of koppel Apple Gezondheid op het tabblad Vandaag."
-                )
+                ScrollView {
+                    EmptyStateView(
+                        symbol: "figure.run",
+                        title: "Nog niets opgenomen",
+                        message: "Start je eerste ronde met je iPhone of Watch, of koppel Apple Gezondheid op het tabblad Vandaag."
+                    )
+                    .padding(.top, 48)
+                }
             } else {
                 List {
-                    ForEach(records) { record in
+                    ForEach(Array(records.enumerated()), id: \.element.id) { index, record in
                         NavigationLink {
                             ActivityDetailView(record: record)
                         } label: {
                             ActivityRecordRow(record: record)
                         }
+                        .entrance(index)
+                        .cardRow()
                         .swipeActions(edge: .trailing) {
                             Button(role: .destructive) {
                                 app.delete(record)
@@ -36,11 +41,13 @@ struct ActivitiesView: View {
                         }
                     }
                 }
+                .listStyle(.plain)
                 .refreshable {
                     await app.refreshAll()
                 }
             }
         }
+        .metricListBackground()
         .navigationTitle("Activiteiten")
         .toolbar {
             if sync.isSyncing {
@@ -69,64 +76,90 @@ struct ActivityDetailView: View {
     var body: some View {
         List {
             Section {
-                HStack(spacing: 12) {
-                    ActivityIcon(type: record.type, size: 48)
-                    VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack(spacing: 8) {
+                        SportStripe(type: record.type)
+                        Image(systemName: record.type.symbolName)
+                            .foregroundStyle(record.type.tint)
+                            .accessibilityHidden(true)
                         Text(record.type.displayName)
-                            .font(.headline)
-                        Text(record.startedAt.formatted(date: .complete, time: .shortened))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .font(.metricLabel(17))
+                            .foregroundStyle(Theme.textSecondary)
                     }
+                    ActivityHeroFigure(
+                        type: record.type,
+                        durationSeconds: record.durationSeconds,
+                        distanceMeters: record.distanceMeters
+                    )
+                    Text(record.startedAt.formatted(date: .complete, time: .shortened))
+                        .font(.metricText(14))
+                        .foregroundStyle(Theme.textMuted)
+                    ActivityStatsGrid(
+                        type: record.type,
+                        durationSeconds: record.durationSeconds,
+                        distanceMeters: record.distanceMeters,
+                        elevationGainMeters: record.elevationGainMeters,
+                        activeEnergyKcal: record.activeEnergyKcal,
+                        avgHeartRate: record.avgHeartRate,
+                        maxHeartRate: record.maxHeartRate
+                    )
                 }
-                ActivityStatsGrid(
-                    type: record.type,
-                    durationSeconds: record.durationSeconds,
-                    distanceMeters: record.distanceMeters,
-                    elevationGainMeters: record.elevationGainMeters,
-                    activeEnergyKcal: record.activeEnergyKcal,
-                    avgHeartRate: record.avgHeartRate,
-                    maxHeartRate: record.maxHeartRate
-                )
+                .padding(.vertical, 6)
             }
+            .metricRow()
 
             let route = record.route
             if route.count >= 2 {
                 Section {
                     RouteMapView(route: route)
                         .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
                 }
             }
 
             if !record.notes.isEmpty {
-                Section("Notitie") {
+                Section {
                     Text(record.notes)
+                        .font(.metricText(16))
+                } header: {
+                    SectionHeader("Notitie")
                 }
+                .metricRow()
             }
 
             Section {
                 LabeledContent("Zichtbaar voor") {
                     let visibility = record.visibility ?? app.me?.defaultVisibility ?? .friends
                     Label(visibility.displayName, systemImage: visibility.symbolName)
+                        .foregroundStyle(Theme.textSecondary)
                 }
-                LabeledContent("Bron", value: record.source.displayName)
+                LabeledContent("Bron") {
+                    Text(record.source.displayName)
+                        .foregroundStyle(Theme.textSecondary)
+                }
                 if record.syncState != .synced {
                     Label("Wordt gesynchroniseerd zodra er verbinding is", systemImage: "arrow.triangle.2.circlepath")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(.metricText(13))
+                        .foregroundStyle(Theme.textMuted)
                 }
             }
+            .metricRow()
 
             if let serverId = record.serverId {
                 ActivitySocialSections(activityId: serverId, loadsRouteInto: record)
             }
 
             Section {
-                Button("Verwijder activiteit", role: .destructive) {
+                Button(role: .destructive) {
                     confirmDelete = true
+                } label: {
+                    Label("Verwijder activiteit", systemImage: "trash")
+                        .foregroundStyle(Theme.danger)
                 }
             }
+            .metricRow()
         }
+        .metricListBackground()
         .navigationTitle(record.title.isEmpty ? record.type.displayName : record.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -170,13 +203,21 @@ struct EditActivitySheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Titel") {
+                Section {
                     TextField("Titel", text: $title)
+                } header: {
+                    SectionHeader("Titel")
                 }
-                Section("Notitie") {
+                .metricRow()
+
+                Section {
                     TextField("Hoe ging het?", text: $notes, axis: .vertical)
                         .lineLimit(3...8)
+                } header: {
+                    SectionHeader("Notitie")
                 }
+                .metricRow()
+
                 Section {
                     Picker("Sport", selection: $type) {
                         ForEach(ActivityType.allCases) { type in
@@ -189,7 +230,12 @@ struct EditActivitySheet: View {
                         }
                     }
                 }
+                .metricRow()
             }
+            .metricListBackground()
+            .font(.metricText())
+            .foregroundStyle(Theme.text)
+            .tint(Theme.tartan)
             .navigationTitle("Wijzig activiteit")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -202,6 +248,7 @@ struct EditActivitySheet: View {
                     Button("Bewaar") {
                         save()
                     }
+                    .fontWeight(.semibold)
                 }
             }
             .onAppear {

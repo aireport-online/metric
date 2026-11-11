@@ -20,59 +20,57 @@ struct TodayView: View {
         app.me?.weeklyGoalMinutes ?? 150
     }
 
+    /// Aantal verschillende dagen in de lopende week met minstens één activiteit.
+    private var activeDaysThisWeek: Int {
+        let calendar = StatsCalculator.mondayCalendar()
+        let weekStart = StatsCalculator.weekStart(for: Date(), calendar: calendar)
+        var days = Set<Date>()
+        for record in records where record.startedAt >= weekStart {
+            days.insert(calendar.startOfDay(for: record.startedAt))
+        }
+        return days.count
+    }
+
     var body: some View {
         let weeks = StatsCalculator.weekly(samples, weeks: 8)
         let thisWeek = weeks.last
         let minutes = Int(((thisWeek?.durationSeconds ?? 0) / 60).rounded())
         let streak = StatsCalculator.streakWeeks(samples)
 
-        List {
-            Section {
-                WeekGoalCard(
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                WeekTrackCard(
                     minutes: minutes,
                     goalMinutes: goalMinutes,
                     distanceMeters: thisWeek?.distanceMeters ?? 0,
-                    count: thisWeek?.count ?? 0,
+                    activeDays: activeDaysThisWeek,
                     streakWeeks: streak
                 )
-            }
+                .entrance(0)
 
-            if app.health.isAvailable && !app.healthEnabled {
-                Section {
+                if app.health.isAvailable && !app.healthEnabled {
                     HealthPromptCard()
+                        .entrance(1)
                 }
-            }
 
-            Section("Afgelopen 8 weken") {
-                WeeklyChart(weeks: weeks, goalMinutes: goalMinutes)
-                    .frame(height: 180)
-                    .padding(.vertical, 8)
-            }
+                WeeklyChartCard(weeks: weeks, goalMinutes: goalMinutes)
+                    .entrance(2)
 
-            Section("Recent") {
-                if records.isEmpty {
-                    Text("Nog geen activiteiten. Neem er een op via het tabblad Opnemen, of start een workout op je Watch.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(records.prefix(5)) { record in
-                        NavigationLink {
-                            ActivityDetailView(record: record)
-                        } label: {
-                            ActivityRecordRow(record: record)
-                        }
-                    }
-                }
-            }
+                RecentCard(records: Array(records.prefix(5)))
+                    .entrance(3)
 
-            if let message = sync.lastErrorMessage {
-                Section {
+                if let message = sync.lastErrorMessage {
                     Label(message, systemImage: "exclamationmark.icloud")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(.metricText(13))
+                        .foregroundStyle(Theme.textMuted)
+                        .padding(.horizontal, 4)
                 }
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 24)
         }
+        .background(Theme.bg)
         .navigationTitle(greeting)
         .refreshable {
             await app.refreshAll()
@@ -87,68 +85,95 @@ struct TodayView: View {
     }
 }
 
-private struct WeekGoalCard: View {
+/// De week als atletiekbaan: de buitenbaan is het weekdoel, de binnenbaan het aantal actieve dagen.
+private struct WeekTrackCard: View {
     let minutes: Int
     let goalMinutes: Int
     let distanceMeters: Double
-    let count: Int
+    let activeDays: Int
     let streakWeeks: Int
 
     private var progress: Double {
         goalMinutes > 0 ? Double(minutes) / Double(goalMinutes) : 0
     }
 
-    private var remainingText: String {
-        if minutes >= goalMinutes {
-            return "Weekdoel gehaald 🎉"
+    private var goalReached: Bool {
+        goalMinutes > 0 && minutes >= goalMinutes
+    }
+
+    private var statusText: String {
+        if goalReached {
+            return "Weekdoel gehaald."
         }
-        return "Nog \(goalMinutes - minutes) min tot je weekdoel"
+        let remaining = goalMinutes - minutes
+        return remaining == 1 ? "Nog 1 minuut tot je weekdoel." : "Nog \(remaining) minuten tot je weekdoel."
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 20) {
-                ZStack {
-                    ProgressRing(progress: progress, lineWidth: 14)
-                    VStack(spacing: 0) {
-                        Text("\(minutes)")
-                            .font(.system(size: 30, weight: .bold, design: .rounded))
-                            .monospacedDigit()
-                        Text("van \(goalMinutes) min")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .frame(width: 120, height: 120)
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Deze week")
-                        .font(.headline)
-                    Text(remainingText)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if streakWeeks > 0 {
-                        Label(streakWeeks == 1 ? "1 week op rij" : "\(streakWeeks) weken op rij", systemImage: "flame.fill")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(Color.accentColor)
-                    }
+            HStack(alignment: .firstTextBaseline) {
+                Text("Deze week")
+                    .font(.metricHeading(24))
+                Spacer()
+                if goalReached {
+                    Label("Finish", systemImage: "flag.checkered")
+                        .font(.metricText(13, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .padding(.vertical, 5)
+                        .padding(.horizontal, 10)
+                        .background(Theme.volt, in: Capsule())
+                        .transition(AnyTransition.scale.combined(with: AnyTransition.opacity))
                 }
             }
+            .animation(Theme.Motion.kick, value: goalReached)
 
-            HStack {
-                StatTile(title: "Activiteiten", value: "\(count)")
-                StatTile(title: "Afstand", value: Format.distance(distanceMeters))
-                StatTile(title: "Tijd", value: Format.durationShort(Double(minutes) * 60))
+            TrackProgressView(
+                lanes: [
+                    TrackLane(progress: progress, color: Theme.tartan),
+                    TrackLane(progress: Double(activeDays) / 7, color: Theme.text),
+                ],
+                goalReached: goalReached
+            ) {
+                VStack(spacing: -2) {
+                    CountUp(value: Double(minutes))
+                        .font(.metricNumber(56))
+                        .foregroundStyle(Theme.text)
+                    Text("van \(goalMinutes) min")
+                        .font(.metricLabel(15))
+                        .foregroundStyle(Theme.textMuted)
+                }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Weekdoel")
+            .accessibilityValue("\(minutes) van \(goalMinutes) minuten, \(activeDays) van 7 dagen actief")
+
+            Text(statusText)
+                .font(.metricText(15))
+                .foregroundStyle(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(alignment: .top, spacing: 12) {
+                StatTile(title: "dagen actief", value: "\(activeDays)", unit: "/7", size: 32)
+                StatTile(title: "afstand", value: Format.kilometers(distanceMeters), unit: "km", size: 32)
+                StatTile(
+                    title: streakWeeks == 1 ? "week op rij" : "weken op rij",
+                    value: "\(streakWeeks)",
+                    size: 32,
+                    tint: streakWeeks > 0 ? Theme.volt : Theme.text
+                )
             }
         }
-        .padding(.vertical, 8)
+        .metricCard()
     }
 }
 
-private struct WeeklyChart: View {
+/// Minuten per week; de lopende week in tartan, het doel als baanlijn.
+private struct WeeklyChartCard: View {
     let weeks: [WeekBucket]
     let goalMinutes: Int
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var grown = false
 
     private static let labelFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -157,22 +182,122 @@ private struct WeeklyChart: View {
         return formatter
     }()
 
+    private var maxMinutes: Double {
+        let highest = weeks.map { $0.durationSeconds / 60 }.max() ?? 0
+        return max(highest, Double(goalMinutes)) * 1.15 + 1
+    }
+
     var body: some View {
-        Chart {
-            ForEach(weeks) { week in
-                BarMark(
-                    x: .value("Week van", WeeklyChart.labelFormatter.string(from: week.weekStart)),
-                    y: .value("Minuten", week.durationSeconds / 60)
-                )
-                .foregroundStyle(Color.accentColor)
-                .cornerRadius(4)
+        let currentStart = weeks.last?.weekStart
+
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Minuten per week")
+                .font(.metricHeading(24))
+
+            Chart {
+                ForEach(weeks) { week in
+                    BarMark(
+                        x: .value("Week van", WeeklyChartCard.labelFormatter.string(from: week.weekStart)),
+                        y: .value("Minuten", grown ? week.durationSeconds / 60 : 0),
+                        width: .ratio(0.62)
+                    )
+                    .foregroundStyle(week.weekStart == currentStart ? Theme.tartan : Theme.lineStrong)
+                    .cornerRadius(4)
+                }
+                RuleMark(y: .value("Weekdoel", Double(goalMinutes)))
+                    .foregroundStyle(Theme.textSecondary)
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
             }
-            RuleMark(y: .value("Weekdoel", Double(goalMinutes)))
-                .foregroundStyle(Color.secondary)
-                .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+            .chartYScale(domain: 0...maxMinutes)
+            .chartYAxis {
+                AxisMarks(position: .leading) { _ in
+                    AxisGridLine()
+                        .foregroundStyle(Theme.line)
+                    AxisValueLabel()
+                        .foregroundStyle(Theme.textMuted)
+                }
+            }
+            .chartXAxis {
+                AxisMarks { _ in
+                    AxisValueLabel()
+                        .foregroundStyle(Theme.textMuted)
+                }
+            }
+            .frame(height: 180)
+            .accessibilityLabel("Minuten sport per week, afgelopen 8 weken")
+
+            HStack(spacing: 14) {
+                ChartLegendItem(color: Theme.tartan, label: "Deze week")
+                ChartLegendItem(color: Theme.lineStrong, label: "Eerdere weken")
+                Spacer(minLength: 0)
+            }
+            Text("Stippellijn: weekdoel van \(goalMinutes) minuten.")
+                .font(.metricText(12))
+                .foregroundStyle(Theme.textMuted)
         }
-        .chartYAxisLabel("minuten")
-        .accessibilityLabel("Minuten sport per week, afgelopen 8 weken")
+        .metricCard()
+        .onAppear {
+            if reduceMotion {
+                grown = true
+            } else {
+                withAnimation(Theme.Motion.lap.delay(0.15)) {
+                    grown = true
+                }
+            }
+        }
+    }
+}
+
+private struct ChartLegendItem: View {
+    let color: Color
+    let label: String
+
+    var body: some View {
+        HStack(spacing: 5) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(color)
+                .frame(width: 10, height: 10)
+            Text(label)
+                .font(.metricText(12))
+                .foregroundStyle(Theme.textMuted)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct RecentCard: View {
+    let records: [ActivityRecord]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Recent")
+                .font(.metricHeading(24))
+                .padding(.bottom, 6)
+
+            if records.isEmpty {
+                Text("Nog niets opgenomen. Start je eerste ronde via Opnemen, of begin een workout op je Watch.")
+                    .font(.metricText(15))
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                ForEach(Array(records.enumerated()), id: \.element.id) { index, record in
+                    if index > 0 {
+                        Rectangle()
+                            .fill(Theme.line)
+                            .frame(height: 1)
+                    }
+                    NavigationLink {
+                        ActivityDetailView(record: record)
+                    } label: {
+                        ActivityRecordRow(record: record)
+                            .padding(.vertical, 10)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(PressableStyle())
+                }
+            }
+        }
+        .metricCard()
     }
 }
 
@@ -183,10 +308,11 @@ private struct HealthPromptCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Label("Koppel Apple Gezondheid", systemImage: "heart.fill")
-                .font(.headline)
-            Text("Dan verschijnen je workouts van de iPhone en Apple Watch hier automatisch, inclusief route en hartslag.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(.metricHeading(22))
+            Text("Dan verschijnen je workouts van de iPhone en Apple Watch hier vanzelf, met route en hartslag.")
+                .font(.metricText(15))
+                .foregroundStyle(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
             Button {
                 isBusy = true
                 Task {
@@ -196,14 +322,14 @@ private struct HealthPromptCard: View {
             } label: {
                 if isBusy {
                     ProgressView()
+                        .tint(Theme.ink)
                 } else {
                     Text("Koppelen")
-                        .fontWeight(.semibold)
                 }
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(PrimaryButtonStyle(fullWidth: false, compact: true))
             .disabled(isBusy)
         }
-        .padding(.vertical, 6)
+        .metricCard()
     }
 }

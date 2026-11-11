@@ -22,34 +22,37 @@ struct ActivitySocialSections: View {
     var body: some View {
         Group {
             Section {
-                Button {
-                    toggleKudos()
-                } label: {
-                    Label(kudosLabel, systemImage: hasKudoed ? "hand.thumbsup.fill" : "hand.thumbsup")
+                HStack {
+                    KudosButton(count: kudosCount, hasKudoed: hasKudoed, title: kudosLabel) {
+                        toggleKudos()
+                    }
+                    .disabled(!isLoaded)
+                    Spacer()
                 }
-                .disabled(!isLoaded)
                 .task(id: activityId) {
                     await load()
                 }
             }
+            .metricRow()
 
-            Section("Reacties") {
+            Section {
                 if isLoaded && comments.isEmpty {
-                    Text("Nog geen reacties.")
-                        .foregroundStyle(.secondary)
+                    Text("Nog geen reacties. Schrijf de eerste.")
+                        .font(.metricText(15))
+                        .foregroundStyle(Theme.textSecondary)
                 }
                 ForEach(comments) { comment in
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 3) {
                         HStack {
                             Text(comment.user.displayName)
-                                .font(.subheadline.weight(.semibold))
+                                .font(.metricText(14, weight: .semibold))
                             Spacer()
                             Text(comment.createdAt.formatted(.relative(presentation: .named)))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .font(.metricText(12))
+                                .foregroundStyle(Theme.textMuted)
                         }
                         Text(comment.body)
-                            .font(.body)
+                            .font(.metricText(16))
                     }
                     .swipeActions(edge: .trailing) {
                         if comment.user.id == app.me?.id {
@@ -69,17 +72,21 @@ struct ActivitySocialSections: View {
                     } label: {
                         Image(systemName: "arrow.up.circle.fill")
                             .font(.title2)
+                            .foregroundStyle(Theme.tartan)
                     }
                     .buttonStyle(.borderless)
                     .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSending)
                     .accessibilityLabel("Verstuur reactie")
                 }
                 if let errorMessage {
-                    Text(errorMessage)
-                        .font(.footnote)
-                        .foregroundStyle(.red)
+                    Label(errorMessage, systemImage: "exclamationmark.triangle")
+                        .font(.metricText(13))
+                        .foregroundStyle(Theme.danger)
                 }
+            } header: {
+                SectionHeader("Reacties")
             }
+            .metricRow()
         }
     }
 
@@ -193,42 +200,66 @@ struct RemoteActivityDetailView: View {
     var body: some View {
         List {
             Section {
-                HStack(spacing: 12) {
-                    ActivityIcon(type: activity.type, size: 48)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(activity.user.displayName)
-                            .font(.headline)
-                        Text("\(activity.type.displayName) · \(activity.startedAt.formatted(date: .abbreviated, time: .shortened))")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack(spacing: 10) {
+                        UserAvatar(name: activity.user.displayName, size: 32)
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(activity.user.displayName)
+                                .font(.metricText(15, weight: .semibold))
+                            Text(activity.startedAt.formatted(date: .abbreviated, time: .shortened))
+                                .font(.metricText(13))
+                                .foregroundStyle(Theme.textMuted)
+                        }
                     }
+                    HStack(spacing: 8) {
+                        SportStripe(type: activity.type)
+                        Image(systemName: activity.type.symbolName)
+                            .foregroundStyle(activity.type.tint)
+                            .accessibilityHidden(true)
+                        Text(activity.type.displayName)
+                            .font(.metricLabel(17))
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                    ActivityHeroFigure(
+                        type: activity.type,
+                        durationSeconds: activity.durationSeconds,
+                        distanceMeters: activity.distanceMeters
+                    )
+                    ActivityStatsGrid(
+                        type: activity.type,
+                        durationSeconds: activity.durationSeconds,
+                        distanceMeters: activity.distanceMeters,
+                        elevationGainMeters: activity.elevationGainMeters,
+                        activeEnergyKcal: activity.activeEnergyKcal,
+                        avgHeartRate: activity.avgHeartRate,
+                        maxHeartRate: activity.maxHeartRate
+                    )
                 }
-                ActivityStatsGrid(
-                    type: activity.type,
-                    durationSeconds: activity.durationSeconds,
-                    distanceMeters: activity.distanceMeters,
-                    elevationGainMeters: activity.elevationGainMeters,
-                    activeEnergyKcal: activity.activeEnergyKcal,
-                    avgHeartRate: activity.avgHeartRate,
-                    maxHeartRate: activity.maxHeartRate
-                )
+                .padding(.vertical, 6)
             }
+            .metricRow()
 
             if route.count >= 2 {
                 Section {
                     RouteMapView(route: route)
                         .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
                 }
             }
 
             if !activity.notes.isEmpty {
-                Section("Notitie") {
+                Section {
                     Text(activity.notes)
+                        .font(.metricText(16))
+                } header: {
+                    SectionHeader("Notitie")
                 }
+                .metricRow()
             }
 
             ActivitySocialSections(activityId: activity.id, onChange: onChange)
         }
+        .metricListBackground()
         .navigationTitle(activity.title.isEmpty ? activity.type.displayName : activity.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

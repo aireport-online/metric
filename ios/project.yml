@@ -41,7 +41,17 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ITSAppUsesNonExemptEncryption: false
-        UILaunchScreen: {}
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UIUserInterfaceStyle: Dark
+        UIAppFonts:
+          - BarlowCondensed_600SemiBold.ttf
+          - BarlowCondensed_700Bold.ttf
+          - BarlowCondensed_700Bold_Italic.ttf
+          - BarlowCondensed_800ExtraBold_Italic.ttf
+          - InstrumentSans_400Regular.ttf
+          - InstrumentSans_500Medium.ttf
+          - InstrumentSans_600SemiBold.ttf
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UIBackgroundModes:
@@ -83,6 +93,14 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         WKApplication: true
+        UIAppFonts:
+          - BarlowCondensed_600SemiBold.ttf
+          - BarlowCondensed_700Bold.ttf
+          - BarlowCondensed_700Bold_Italic.ttf
+          - BarlowCondensed_800ExtraBold_Italic.ttf
+          - InstrumentSans_400Regular.ttf
+          - InstrumentSans_500Medium.ttf
+          - InstrumentSans_600SemiBold.ttf
         WKCompanionAppBundleIdentifier: $(METRIC_BUNDLE_ID)
         WKBackgroundModes:
           - workout-processing
