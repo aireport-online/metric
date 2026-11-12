@@ -8,9 +8,8 @@
 # de test meldt dat de opname van de workout begonnen is.
 #
 # Met DEMO_DIAGNOSE=1 komt er extra materiaal om haperingen te onderzoeken: van de iPhone-app een
-# `sample`-rapport over de hele test (waar de main thread tijd aan besteedt) en het logboek van
-# locationd, van de Watch elke 2 s een schermafbeelding. Dat vertraagt de app iets; gebruik het
-# niet voor de uiteindelijke video.
+# `sample`-rapport over de hele test (waar de main thread tijd aan besteedt), van de Watch elke
+# 2 s een schermafbeelding. Dat vertraagt de app iets; gebruik het niet voor de uiteindelijke video.
 set -u
 NAME="$1"; SCHEME="$2"; PLATFORM="$3"; UDID="$4"; PROCESS="$5"
 LOGS="$OUT/logs"
@@ -87,6 +86,8 @@ if [ "${DEMO_DIAGNOSE:-0}" = "1" ] && [ "$PLATFORM" = "iOS Simulator" ]; then
       sleep 1
     done
   ) > "$LOGS/$NAME-sample.log" 2>&1 &
+fi
+if [ -n "${DEMO_LOCATION_ROUTE:-}" ]; then
   # Wat locationd met de gesimuleerde posities doet.
   xcrun simctl spawn "$UDID" log stream --style compact --level default \
     --predicate 'process == "locationd"' > "$LOGS/$NAME-locationd.log" 2>&1 &
