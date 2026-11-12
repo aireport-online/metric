@@ -158,6 +158,7 @@ struct RouteMapView: View {
         .frame(height: 240)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.lg, style: .continuous))
         .accessibilityLabel("Kaart met de route")
+        .brandBars()
     }
 }
 
@@ -285,6 +286,15 @@ struct UserAvatar: View {
 }
 
 extension View {
+    /// Houdt de navigatie- en tabbalk in de huisstijl op schermen met een kaart: MapKit zet er
+    /// anders een doorschijnend systeemvlak achter, waardoor de balken grijs en gedimd worden.
+    func brandBars() -> some View {
+        self
+            .toolbarBackground(Theme.bg, for: .navigationBar)
+            .toolbarBackground(Theme.surface, for: .tabBar)
+            .toolbarBackground(.visible, for: .navigationBar, .tabBar)
+    }
+
     /// Achtergrond van een `List` of `Form` in de huisstijl.
     func metricListBackground() -> some View {
         self

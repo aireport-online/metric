@@ -260,6 +260,7 @@ struct RemoteActivityDetailView: View {
             ActivitySocialSections(activityId: activity.id, onChange: onChange)
         }
         .metricListBackground()
+        .brandBars()
         .navigationTitle(activity.title.isEmpty ? activity.type.displayName : activity.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

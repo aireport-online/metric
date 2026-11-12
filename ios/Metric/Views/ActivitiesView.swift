@@ -161,6 +161,7 @@ struct ActivityDetailView: View {
             .metricRow()
         }
         .metricListBackground()
+        .brandBars()
         .navigationTitle(record.title.isEmpty ? record.type.displayName : record.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

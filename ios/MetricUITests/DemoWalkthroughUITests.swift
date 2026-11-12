@@ -151,6 +151,8 @@ final class DemoWalkthroughUITests: XCTestCase {
 
         segments.buttons["Vrienden"].firstMatch.tap()
         mark("vriendenlijst")
+        // Wacht op de lijst van de server: het verzoek van Emma en de vrienden.
+        _ = app.staticTexts["Emma Smit"].waitForExistence(timeout: 10)
         pause(2)
     }
 

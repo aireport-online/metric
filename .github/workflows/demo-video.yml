@@ -94,7 +94,7 @@ jobs:
           curl -s -o /dev/null -w 'POST /api/v1/auth/login als sanne: %{http_code} in %{time_total} s\n' \
             -H 'Content-Type: application/json' \
             -d '{"email":"sanne@metric.test","password":"metric-demo"}' \
-            http://localhost:3000/api/v1/auth/login
+            http://localhost:3000/api/v1/auth/login | tee "$OUT/logs/server-check.txt"
 
       # --- Xcode-project ----------------------------------------------------------------------
 
