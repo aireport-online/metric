@@ -31,7 +31,25 @@ xcrun simctl spawn "$UDID" log stream --style compact --level default \
   --predicate "process == \"$PROCESS\"" > "$LOGS/$NAME-app.log" 2>&1 &
 APPLOG=$!
 
-xcodebuild test-without-building \
+# Proef: de test kan met een signaalbestand een doorlopend locatiescenario laten starten.
+SIGNALS="$OUT/signals"
+mkdir -p "$SIGNALS"
+rm -f "$SIGNALS"/*
+if [ -n "${DEMO_LOCATION_ROUTE:-}" ]; then
+  (
+    for _ in $(seq 1 3000); do
+      if [ -e "$SIGNALS/location-scenario" ]; then
+        date +%H:%M:%S
+        # shellcheck disable=SC2086
+        xcrun simctl location "$UDID" start --speed=4 --interval=1 $DEMO_LOCATION_ROUTE
+        break
+      fi
+      sleep 0.2
+    done
+  ) > "$LOGS/$NAME-location-scenario.log" 2>&1 &
+fi
+
+TEST_RUNNER_DEMO_SIGNAL_DIR="$SIGNALS" xcodebuild test-without-building \
   -project Metric.xcodeproj \
   -scheme "$SCHEME" \
   -destination "platform=$PLATFORM,id=$UDID" \

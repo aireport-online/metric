@@ -180,11 +180,19 @@ final class DemoWalkthroughUITests: XCTestCase {
         if springboard.alerts.firstMatch.exists {
             tapIfPresent(["Allow While Using App", "Sta toe bij gebruik van app", "Bij gebruik van app"], in: [springboard])
         }
-        // Een kwartminuut hardlopen: elke seconde een nieuwe positie.
-        while Date().timeIntervalSince(runStart ?? Date()) < 15 {
+        // Proef: eerst negen seconden lang elke seconde een nieuwe positie vanuit de test, daarna
+        // neemt een doorlopend scenario van `simctl location` het over (via een signaalbestand).
+        while Date().timeIntervalSince(runStart ?? Date()) < 9 {
             updateLocation()
             pause(1)
         }
+        if let directory = ProcessInfo.processInfo.environment["DEMO_SIGNAL_DIR"] {
+            let created = FileManager.default.createFile(atPath: directory + "/location-scenario", contents: Data())
+            print("DEMO-SIGNAL location-scenario \(created ? "geschreven" : "mislukt") in \(directory)")
+        } else {
+            print("DEMO-SIGNAL geen DEMO_SIGNAL_DIR")
+        }
+        pause(9)
 
         stop.tap()
         let save = app.buttons["Bewaar workout"]

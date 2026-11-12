@@ -137,6 +137,7 @@ jobs:
           # (een scenario van `simctl location start` kwam tijdens de test niet bij de app aan).
           xcrun simctl install "$UDID" "$APP" || true
           xcrun simctl privacy "$UDID" grant location "$BUNDLE_ID" || echo "Locatietoegang vooraf verlenen lukte niet."
+          export DEMO_LOCATION_ROUTE="52.360987,4.880004 52.3603,4.8770 52.3597,4.8735 52.3590,4.8700 52.3583,4.8665 52.3575,4.8630"
           scripts/demo-video/record.sh iphone MetricUITests "iOS Simulator" "$UDID" Metric
 
       - name: iPhone-simulator afsluiten

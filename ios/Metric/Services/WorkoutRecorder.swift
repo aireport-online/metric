@@ -187,9 +187,17 @@ final class WorkoutRecorder: ObservableObject {
             break
         }
         locationDenied = false
+        beginUpdates()
+    }
+
+    private func beginUpdates() {
         // Blijft de route volgen als het scherm uit gaat (vereist de achtergrondmodus `location`).
-        manager.allowsBackgroundLocationUpdates = true
-        manager.showsBackgroundLocationIndicator = true
+        // Demo-modus: alleen op de voorgrond. Met een achtergrondsessie geeft locationd in de
+        // simulator na de eerste positie niets meer door.
+        if !DemoMode.isActive {
+            manager.allowsBackgroundLocationUpdates = true
+            manager.showsBackgroundLocationIndicator = true
+        }
         manager.startUpdatingLocation()
     }
 
@@ -231,9 +239,7 @@ final class WorkoutRecorder: ObservableObject {
         case .authorizedWhenInUse, .authorizedAlways:
             locationDenied = false
             if state != .idle, type.usesGPS {
-                manager.allowsBackgroundLocationUpdates = true
-                manager.showsBackgroundLocationIndicator = true
-                manager.startUpdatingLocation()
+                beginUpdates()
             }
         default:
             break
