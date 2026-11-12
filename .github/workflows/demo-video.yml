@@ -137,11 +137,11 @@ jobs:
           UDID="$IPHONE_UDID"
           APP=DerivedData/Build/Products/Debug-iphonesimulator/Metric.app
           BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP/Info.plist")
-          # Locatietoegang vooraf verlenen. Tijdens de opname van de workout loopt de simulator dit
-          # pad langs de noordkant van het Vondelpark af (zie record.sh).
+          # Locatietoegang vooraf verlenen. Tijdens de test loopt de simulator dit rondje door het
+          # Vondelpark (ruim 3 km, zie record.sh).
           xcrun simctl install "$UDID" "$APP" || true
           xcrun simctl privacy "$UDID" grant location "$BUNDLE_ID" || echo "Locatietoegang vooraf verlenen lukte niet."
-          export DEMO_LOCATION_ROUTE="52.3611,4.8805 52.3603,4.8770 52.3597,4.8735 52.3590,4.8700 52.3583,4.8665 52.3575,4.8630"
+          export DEMO_LOCATION_ROUTE="52.3611,4.8805 52.3603,4.8770 52.3597,4.8735 52.3590,4.8700 52.3583,4.8665 52.3575,4.8630 52.3566,4.8598 52.3557,4.8572 52.3549,4.8590 52.3555,4.8625 52.3562,4.8660 52.3569,4.8695 52.3577,4.8730 52.3585,4.8765 52.3594,4.8798 52.3611,4.8805"
           scripts/demo-video/record.sh iphone MetricUITests "iOS Simulator" "$UDID" Metric
 
       - name: iPhone-simulator afsluiten

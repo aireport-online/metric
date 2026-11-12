@@ -4,8 +4,7 @@
 #
 # Gebruik: record.sh <naam> <scheme> <platform> <udid> <procesnaam>   (vanuit ios/, met OUT gezet)
 #
-# Met DEMO_LOCATION_ROUTE (coördinaten "lat,lon lat,lon ...") loopt de simulator dat pad af zodra
-# de test meldt dat de opname van de workout begonnen is.
+# Met DEMO_LOCATION_ROUTE (coördinaten "lat,lon lat,lon ...") loopt de simulator tijdens de test dat pad af.
 #
 # Met DEMO_DIAGNOSE=1 komt er extra materiaal om haperingen te onderzoeken: van de iPhone-app een
 # `sample`-rapport over de hele test (waar de main thread tijd aan besteedt), van de Watch elke
@@ -33,26 +32,17 @@ xcrun simctl spawn "$UDID" log stream --style compact --level default \
   --predicate "process == \"$PROCESS\"" > "$LOGS/$NAME-app.log" 2>&1 &
 APPLOG=$!
 
-# De test geeft met een signaalbestand aan dat de opname van de workout loopt; laat de simulator
-# dan het pad uit DEMO_LOCATION_ROUTE aflopen (4,2 m/s, elke seconde een positie). Niet fataal.
-SIGNALS="${RUNNER_TEMP:-/tmp}/demo-signals"
-mkdir -p "$SIGNALS"
-rm -f "$SIGNALS"/*
+# Laat de simulator de hele test lang het pad uit DEMO_LOCATION_ROUTE aflopen (4 m/s, elke seconde
+# een positie), zodat de opname van de workout afstand en tempo laat zien. Het scenario heeft op een
+# drukke runner tot een halve minuut nodig om op gang te komen; daarom start het al vóór de test.
+# Niet fataal.
 if [ -n "${DEMO_LOCATION_ROUTE:-}" ]; then
-  (
-    for _ in $(seq 1 3000); do
-      if [ -e "$SIGNALS/location-scenario" ]; then
-        date +%H:%M:%S
-        # shellcheck disable=SC2086
-        xcrun simctl location "$UDID" start --speed=4.2 --interval=1 $DEMO_LOCATION_ROUTE
-        break
-      fi
-      sleep 0.2
-    done
-  ) > "$LOGS/$NAME-location-scenario.log" 2>&1 &
+  # shellcheck disable=SC2086
+  xcrun simctl location "$UDID" start --speed=4 --interval=1 $DEMO_LOCATION_ROUTE \
+    > "$LOGS/$NAME-location-scenario.log" 2>&1 &
 fi
 
-TEST_RUNNER_DEMO_SIGNAL_DIR="$SIGNALS" xcodebuild test-without-building \
+xcodebuild test-without-building \
   -project Metric.xcodeproj \
   -scheme "$SCHEME" \
   -destination "platform=$PLATFORM,id=$UDID" \

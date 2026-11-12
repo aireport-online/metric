@@ -1,4 +1,3 @@
-import CoreLocation
 import XCTest
 
 /// Loopt de iPhone-app door voor de demovideo: inloggen, Vandaag, Activiteiten, Vrienden,
@@ -28,16 +27,6 @@ final class DemoWalkthroughUITests: XCTestCase {
 
     func testWalkthrough() throws {
         started = Date()
-        // Zet de simulator alvast bij de ingang van het Vondelpark, waar het pad van de opname begint.
-        XCUIDevice.shared.location = XCUILocation(
-            location: CLLocation(
-                coordinate: CLLocationCoordinate2D(latitude: 52.3611, longitude: 4.8805),
-                altitude: 1,
-                horizontalAccuracy: 5,
-                verticalAccuracy: 5,
-                timestamp: Date()
-            )
-        )
         app.launch()
         mark("gestart")
 
@@ -186,11 +175,8 @@ final class DemoWalkthroughUITests: XCTestCase {
         if springboard.alerts.firstMatch.exists {
             tapIfPresent(["Allow While Using App", "Sta toe bij gebruik van app", "Bij gebruik van app"], in: [springboard])
         }
-        // Hardlopen: de workflow laat de simulator nu een pad door het Vondelpark aflopen
-        // (`simctl location start`), gestart door dit signaalbestand. Zonder workflow staat de loper stil.
-        if let directory = ProcessInfo.processInfo.environment["DEMO_SIGNAL_DIR"] {
-            FileManager.default.createFile(atPath: directory + "/location-scenario", contents: Data())
-        }
+        // Hardlopen. De workflow laat de simulator de hele test lang een rondje door het Vondelpark
+        // lopen (`simctl location start`); zonder dat scenario staat de loper stil.
         pause(16)
 
         stop.tap()
