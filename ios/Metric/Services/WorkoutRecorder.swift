@@ -57,7 +57,9 @@ final class WorkoutRecorder: ObservableObject {
         manager.delegate = locationDelegate
         manager.desiredAccuracy = kCLLocationAccuracyBest
         manager.activityType = .fitness
-        manager.distanceFilter = 5
+        // Demo-modus: zonder afstandsfilter. De simulator geeft met een filter alleen de eerste
+        // positie door (locationd houdt gesimuleerde verplaatsingen dan tegen).
+        manager.distanceFilter = DemoMode.isActive ? kCLDistanceFilterNone : 5
         manager.pausesLocationUpdatesAutomatically = false
     }
 

@@ -180,11 +180,10 @@ final class DemoWalkthroughUITests: XCTestCase {
         if springboard.alerts.firstMatch.exists {
             tapIfPresent(["Allow While Using App", "Sta toe bij gebruik van app", "Bij gebruik van app"], in: [springboard])
         }
-        // Achttien seconden hardlopen. Proef: eerst elke seconde een nieuwe positie (stappen van
-        // 3,6 m, kleiner dan het afstandsfilter van 5 m), daarna om de twee seconden (7,2 m).
-        while Date().timeIntervalSince(runStart ?? Date()) < 18 {
+        // Een kwartminuut hardlopen: elke seconde een nieuwe positie.
+        while Date().timeIntervalSince(runStart ?? Date()) < 15 {
             updateLocation()
-            pause(Date().timeIntervalSince(runStart ?? Date()) < 4 ? 1 : 2)
+            pause(1)
         }
 
         stop.tap()
@@ -260,7 +259,7 @@ final class DemoWalkthroughUITests: XCTestCase {
         CLLocationCoordinate2D(latitude: 52.3583, longitude: 4.8665),
         CLLocationCoordinate2D(latitude: 52.3575, longitude: 4.8630),
     ]
-    private let runningSpeed = 3.6 // m/s
+    private let runningSpeed = 4.0 // m/s, ruim 4 minuten per kilometer
     private var runStart: Date?
 
     /// Zet de gesimuleerde positie op de plek waar de loper nu is.
