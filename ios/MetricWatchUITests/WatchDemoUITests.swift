@@ -25,21 +25,32 @@ final class WatchDemoUITests: XCTestCase {
 
     func testWalkthrough() throws {
         started = Date()
+        let start = app.buttons["watch-start"]
+
+        // Opwarmen: het scherm van de Watch-simulator slaapt als er een tijd niets is gebeurd en
+        // ververst dan pas weer na een veeg. Start de app daarom eerst één keer en veeg.
         app.launch()
-        mark("gestart")
+        XCTAssertTrue(start.waitForExistence(timeout: 120), "Het startscherm verschijnt niet")
+        mark("opwarmen")
+        app.swipeUp()
+        pause(1)
+        app.swipeDown()
+        pause(1)
+        app.terminate()
 
         // Startscherm: de baan van de week loopt vol.
-        let start = app.buttons["watch-start"]
-        XCTAssertTrue(start.waitForExistence(timeout: 120), "Het startscherm verschijnt niet")
+        app.launch()
+        mark("gestart")
+        XCTAssertTrue(start.waitForExistence(timeout: 60), "Het startscherm verschijnt niet")
         mark("startscherm")
-        pause(3.5)
+        pause(3)
         start.tap()
 
         // Sport kiezen, daarna telt het startschot af.
         let run = app.buttons["watch-sport-run"]
         XCTAssertTrue(run.waitForExistence(timeout: 20), "De sportlijst verschijnt niet")
         mark("sport")
-        pause(2)
+        pause(1.5)
         run.tap()
         mark("aftellen")
 
@@ -47,7 +58,11 @@ final class WatchDemoUITests: XCTestCase {
         let liveState = app.staticTexts["watch-live-state"]
         XCTAssertTrue(liveState.waitForExistence(timeout: 20), "De workout start niet")
         mark("live")
-        pause(12)
+        // Twaalf seconden workout. Een veeg omhoog doet op dit scherm niets, maar houdt het scherm wakker.
+        for _ in 0..<3 {
+            pause(3.5)
+            app.swipeUp()
+        }
 
         // Naar de bediening: pauzeren en hervatten.
         let toggle = app.buttons["watch-pause-toggle"]
@@ -61,7 +76,7 @@ final class WatchDemoUITests: XCTestCase {
         mark("hervat")
         pause(1.2)
         app.swipeLeft()
-        pause(4)
+        pause(3.5)
 
         // Stoppen en de samenvatting.
         let stop = app.buttons["watch-stop"]
@@ -73,7 +88,7 @@ final class WatchDemoUITests: XCTestCase {
         let done = app.buttons["watch-done"]
         XCTAssertTrue(done.waitForExistence(timeout: 20), "De samenvatting verschijnt niet")
         mark("samenvatting")
-        pause(3.5)
+        pause(3)
         app.swipeUp()
         pause(2.5)
         done.tap()

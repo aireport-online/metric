@@ -465,22 +465,26 @@ struct FriendsListView: View {
             if !incoming.isEmpty {
                 Section {
                     ForEach(incoming) { request in
-                        HStack(spacing: 8) {
+                        // De knoppen staan onder de naam: naast elkaar is er op een smal scherm
+                        // te weinig ruimte en breken de naam en "Accepteer" af.
+                        VStack(alignment: .leading, spacing: 10) {
                             UserLabel(user: request.user)
-                            Spacer()
-                            Button("Accepteer") {
-                                perform {
-                                    _ = try await app.api.acceptFriendRequest(id: request.id)
+                            HStack(spacing: 8) {
+                                Button("Accepteer") {
+                                    perform {
+                                        _ = try await app.api.acceptFriendRequest(id: request.id)
+                                    }
                                 }
-                            }
-                            .buttonStyle(PrimaryButtonStyle(fullWidth: false, compact: true))
-                            Button("Weiger") {
-                                perform {
-                                    try await app.api.deleteFriendRequest(id: request.id)
+                                .buttonStyle(PrimaryButtonStyle(fullWidth: false, compact: true))
+                                Button("Weiger") {
+                                    perform {
+                                        try await app.api.deleteFriendRequest(id: request.id)
+                                    }
                                 }
+                                .buttonStyle(SecondaryButtonStyle())
                             }
-                            .buttonStyle(SecondaryButtonStyle())
                         }
+                        .padding(.vertical, 2)
                     }
                 } header: {
                     SectionHeader("Verzoeken")

@@ -9,6 +9,11 @@ name: Demovideo
 
 on:
   workflow_dispatch:
+    inputs:
+      diagnose:
+        description: Extra materiaal om haperingen te onderzoeken (schermafbeeldingen en sample-rapporten); niet voor de uiteindelijke video
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -29,6 +34,7 @@ jobs:
       HOMEBREW_NO_AUTO_UPDATE: "1"
       HOMEBREW_NO_INSTALL_CLEANUP: "1"
       OUT: ${{ github.workspace }}/demo-output
+      DEMO_DIAGNOSE: ${{ inputs.diagnose && '1' || '0' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -85,7 +91,7 @@ jobs:
           done
           echo "GET /api/v1/me zonder token: $CODE"
           [ "$CODE" = "401" ]
-          curl -s -o /dev/null -w 'POST /api/v1/auth/login als sanne: %{http_code}\n' \
+          curl -s -o /dev/null -w 'POST /api/v1/auth/login als sanne: %{http_code} in %{time_total} s\n' \
             -H 'Content-Type: application/json' \
             -d '{"email":"sanne@metric.test","password":"metric-demo"}' \
             http://localhost:3000/api/v1/auth/login
@@ -127,16 +133,11 @@ jobs:
           UDID="$IPHONE_UDID"
           APP=DerivedData/Build/Products/Debug-iphonesimulator/Metric.app
           BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP/Info.plist")
-          # Locatietoegang vooraf verlenen en een rondje door het Vondelpark simuleren (3,6 m/s).
+          # Locatietoegang vooraf verlenen; de test zelf verplaatst de simulator tijdens de opname
+          # (een scenario van `simctl location start` kwam tijdens de test niet bij de app aan).
           xcrun simctl install "$UDID" "$APP" || true
           xcrun simctl privacy "$UDID" grant location "$BUNDLE_ID" || echo "Locatietoegang vooraf verlenen lukte niet."
-          xcrun simctl location "$UDID" start --speed=3.6 --interval=1 \
-            52.3611,4.8805 52.3603,4.8770 52.3597,4.8735 52.3590,4.8700 52.3583,4.8665 52.3575,4.8630 \
-            52.3566,4.8598 52.3557,4.8572 52.3549,4.8590 52.3555,4.8625 52.3562,4.8660 52.3569,4.8695 \
-            52.3577,4.8730 52.3585,4.8765 52.3594,4.8798 52.3611,4.8805 \
-            || xcrun simctl location "$UDID" set 52.3611,4.8805 \
-            || echo "Locatie simuleren lukte niet."
-          scripts/demo-video/record.sh iphone MetricUITests "iOS Simulator" "$UDID"
+          scripts/demo-video/record.sh iphone MetricUITests "iOS Simulator" "$UDID" Metric
 
       - name: iPhone-simulator afsluiten
         if: ${{ !cancelled() && env.IPHONE_UDID != '' }}
@@ -168,7 +169,7 @@ jobs:
         if: ${{ !cancelled() && steps.watch_build.outcome == 'success' }}
         working-directory: ios
         timeout-minutes: 15
-        run: scripts/demo-video/record.sh watch MetricWatchUITests "watchOS Simulator" "$WATCH_UDID"
+        run: scripts/demo-video/record.sh watch MetricWatchUITests "watchOS Simulator" "$WATCH_UDID" MetricWatch
 
       # --- Uitvoer ----------------------------------------------------------------------------
 
@@ -201,6 +202,10 @@ jobs:
             fi
           done
           gzip -9 logs/*.log 2> /dev/null || true
+          for DIR in *-samples; do
+            [ -d "$DIR" ] || continue
+            tar -czf "$DIR.tar.gz" "$DIR" && rm -rf "$DIR"
+          done
           git init -q
           git checkout -q -b ci/demo-video
           git config user.name "github-actions[bot]"

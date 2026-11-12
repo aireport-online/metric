@@ -2,9 +2,13 @@
 # Neemt het scherm van een simulator op terwijl een UI-testscheme draait (test-without-building).
 # De opname wordt ook bij een mislukte test netjes afgesloten, zodat de video bruikbaar is.
 #
-# Gebruik: record.sh <naam> <scheme> <platform> <udid>     (vanuit ios/, met OUT gezet)
+# Gebruik: record.sh <naam> <scheme> <platform> <udid> <procesnaam>   (vanuit ios/, met OUT gezet)
+#
+# Met DEMO_DIAGNOSE=1 komt er extra materiaal om haperingen te onderzoeken: van de iPhone-app
+# doorlopend `sample`-rapporten (waar de main thread tijd aan besteedt), van de Watch elke 2 s een
+# schermafbeelding. Dat vertraagt de app iets; gebruik het niet voor de uiteindelijke video.
 set -u
-NAME="$1"; SCHEME="$2"; PLATFORM="$3"; UDID="$4"
+NAME="$1"; SCHEME="$2"; PLATFORM="$3"; UDID="$4"; PROCESS="$5"
 LOGS="$OUT/logs"
 VIDEO="$OUT/$NAME-raw.mp4"
 TESTLOG="$LOGS/$NAME-test.log"
@@ -21,6 +25,11 @@ for _ in $(seq 1 40); do
 done
 date +%s > "$OUT/$NAME-recording-start.txt"
 
+# Het logboek van de app zelf (meldingen van UIKit, SwiftUI, CoreLocation enz.).
+xcrun simctl spawn "$UDID" log stream --style compact --level default \
+  --predicate "process == \"$PROCESS\"" > "$LOGS/$NAME-app.log" 2>&1 &
+APPLOG=$!
+
 xcodebuild test-without-building \
   -project Metric.xcodeproj \
   -scheme "$SCHEME" \
@@ -31,12 +40,41 @@ xcodebuild test-without-building \
   > "$TESTLOG" 2>&1 &
 XB=$!
 # Waakhond: breek een vastgelopen test af, zodat de opname nog kan worden afgesloten.
-( sleep "$TIMEOUT"; echo "WATCHDOG: test afgebroken na $TIMEOUT s" >> "$TESTLOG"; kill -TERM "$XB" ) > /dev/null 2>&1 &
+( sleep "$TIMEOUT" && echo "WATCHDOG: test afgebroken na $TIMEOUT s" >> "$TESTLOG" && kill -TERM "$XB" ) > /dev/null 2>&1 &
 WD=$!
+
+if [ "${DEMO_DIAGNOSE:-0}" = "1" ] && [ "$PLATFORM" = "watchOS Simulator" ]; then
+  mkdir -p "$OUT/$NAME-shots"
+  (
+    while kill -0 "$XB" 2> /dev/null; do
+      xcrun simctl io "$UDID" screenshot --type=jpeg "$OUT/$NAME-shots/$(date +%H%M%S).jpg" > /dev/null 2>&1
+      sleep 2
+    done
+  ) > /dev/null 2>&1 &
+fi
+if [ "${DEMO_DIAGNOSE:-0}" = "1" ] && [ "$PLATFORM" = "iOS Simulator" ]; then
+  mkdir -p "$OUT/$NAME-samples"
+  # Twee lussen die elkaar overlappen, zodat er geen gaten vallen terwijl een rapport wordt geschreven.
+  for OFFSET in 0 4; do
+    (
+      sleep "$OFFSET"
+      while kill -0 "$XB" 2> /dev/null; do
+        PID=$(pgrep -x "$PROCESS" | head -n 1)
+        if [ -n "$PID" ]; then
+          sample "$PID" 8 5 -mayDie -file "$OUT/$NAME-samples/$(date +%H%M%S)-$OFFSET.txt" || sleep 1
+        else
+          sleep 1
+        fi
+      done
+    ) > "$LOGS/$NAME-sample-$OFFSET.log" 2>&1 &
+  done
+fi
+
 wait "$XB"
 STATUS=$?
 pkill -P "$WD" > /dev/null 2>&1
 kill "$WD" > /dev/null 2>&1
+kill "$APPLOG" > /dev/null 2>&1
 
 sleep 1
 xcrun simctl io "$UDID" screenshot "$OUT/$NAME-end.png" > /dev/null 2>&1 || true

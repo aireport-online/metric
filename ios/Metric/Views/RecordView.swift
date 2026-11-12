@@ -40,6 +40,16 @@ struct RecordView: View {
         .onChange(of: startShots) { _, _ in
             SoundPlayer.shared.play(.start)
         }
+        // Hangt aan het scherm zelf en niet aan de opnameweergave: die verdwijnt zodra de workout stopt.
+        .confirmationDialog("Workout beëindigen?", isPresented: $confirmStop, titleVisibility: .visible) {
+            Button("Bewaar workout") {
+                finish()
+            }
+            Button("Gooi weg", role: .destructive) {
+                recorder.discard()
+            }
+            Button("Ga door", role: .cancel) {}
+        }
         .sheet(item: $saved) { record in
             FinishSummaryView(record: record) {
                 saved = nil
@@ -243,15 +253,6 @@ struct RecordView: View {
             }
             .padding(.bottom, 32)
             .sensoryFeedback(.impact(weight: .medium), trigger: recorder.state == .paused)
-        }
-        .confirmationDialog("Workout beëindigen?", isPresented: $confirmStop, titleVisibility: .visible) {
-            Button("Bewaar workout") {
-                finish()
-            }
-            Button("Gooi weg", role: .destructive) {
-                recorder.discard()
-            }
-            Button("Ga door", role: .cancel) {}
         }
     }
 
