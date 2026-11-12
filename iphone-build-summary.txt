@@ -1,0 +1,2 @@
+== iphone: build-for-testing, exit 0
+** TEST BUILD SUCCEEDED **

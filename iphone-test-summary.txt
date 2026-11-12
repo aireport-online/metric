@@ -1,0 +1,10 @@
+== iphone: test, exit 0
+2026-11-12 09:55:48.786718+0000 MetricUITests-Runner[16566:50784] [General] Failed to send CA Event for app launch measurements for ca_event_type: 0 event_name: com.apple.app_launch_measurement.FirstFramePresentationMetric
+2026-11-12 09:55:48.835674+0000 MetricUITests-Runner[16566:50784] [General] Failed to send CA Event for app launch measurements for ca_event_type: 1 event_name: com.apple.app_launch_measurement.ExtendedLaunchMetrics
+Test Case '-[MetricUITests.DemoWalkthroughUITests testWalkthrough]' passed (148.202 seconds).
+	 Executed 1 test, with 0 failures (0 unexpected) in 148.202 (148.203) seconds
+	 Executed 1 test, with 0 failures (0 unexpected) in 148.202 (148.204) seconds
+	 Executed 1 test, with 0 failures (0 unexpected) in 148.202 (148.205) seconds
+** TEST EXECUTE SUCCEEDED **
+-- markeringen
+DEMO-MARK gestart t=10.3;DEMO-MARK inlogscherm t=11.5;DEMO-MARK ingelogd t=25.3;DEMO-MARK vandaag t=32.6;DEMO-MARK activiteiten t=44.7;DEMO-MARK activiteit t=49.9;DEMO-MARK vrienden t=67.5;DEMO-MARK kudos t=76.5;DEMO-MARK ranglijst t=79.2;DEMO-MARK vriendenlijst t=85.6;DEMO-MARK opnemen t=90.5;DEMO-MARK aftellen t=95.9;DEMO-MARK opname t=99.1;DEMO-MARK finish t=119.1;DEMO-MARK profiel t=128.9;DEMO-MARK klaar t=147.3;
