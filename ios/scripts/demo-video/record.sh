@@ -4,6 +4,9 @@
 #
 # Gebruik: record.sh <naam> <scheme> <platform> <udid> <procesnaam>   (vanuit ios/, met OUT gezet)
 #
+# Met DEMO_LOCATION_ROUTE (coördinaten "lat,lon lat,lon ...") loopt de simulator dat pad af zodra
+# de test meldt dat de opname van de workout begonnen is.
+#
 # Met DEMO_DIAGNOSE=1 komt er extra materiaal om haperingen te onderzoeken: van de iPhone-app een
 # `sample`-rapport over de hele test (waar de main thread tijd aan besteedt) en het logboek van
 # locationd, van de Watch elke 2 s een schermafbeelding. Dat vertraagt de app iets; gebruik het
@@ -31,8 +34,9 @@ xcrun simctl spawn "$UDID" log stream --style compact --level default \
   --predicate "process == \"$PROCESS\"" > "$LOGS/$NAME-app.log" 2>&1 &
 APPLOG=$!
 
-# Proef: de test kan met een signaalbestand een doorlopend locatiescenario laten starten.
-SIGNALS="$OUT/signals"
+# De test geeft met een signaalbestand aan dat de opname van de workout loopt; laat de simulator
+# dan het pad uit DEMO_LOCATION_ROUTE aflopen (4,2 m/s, elke seconde een positie). Niet fataal.
+SIGNALS="${RUNNER_TEMP:-/tmp}/demo-signals"
 mkdir -p "$SIGNALS"
 rm -f "$SIGNALS"/*
 if [ -n "${DEMO_LOCATION_ROUTE:-}" ]; then
@@ -41,7 +45,7 @@ if [ -n "${DEMO_LOCATION_ROUTE:-}" ]; then
       if [ -e "$SIGNALS/location-scenario" ]; then
         date +%H:%M:%S
         # shellcheck disable=SC2086
-        xcrun simctl location "$UDID" start --speed=4 --interval=1 $DEMO_LOCATION_ROUTE
+        xcrun simctl location "$UDID" start --speed=4.2 --interval=1 $DEMO_LOCATION_ROUTE
         break
       fi
       sleep 0.2

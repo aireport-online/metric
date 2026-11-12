@@ -55,12 +55,16 @@ final class WorkoutRecorder: ObservableObject {
             }
         }
         manager.delegate = locationDelegate
-        manager.desiredAccuracy = kCLLocationAccuracyBest
-        manager.activityType = .fitness
-        // Demo-modus: zonder afstandsfilter. De simulator geeft met een filter alleen de eerste
-        // positie door (locationd houdt gesimuleerde verplaatsingen dan tegen).
-        manager.distanceFilter = DemoMode.isActive ? kCLDistanceFilterNone : 5
-        manager.pausesLocationUpdatesAutomatically = false
+        if DemoMode.isActive {
+            // Demo-modus: een eenvoudige sessie op de voorgrond. Met de afstelling hieronder geeft
+            // de simulator na de eerste positie geen gesimuleerde verplaatsing meer door.
+            manager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+        } else {
+            manager.desiredAccuracy = kCLLocationAccuracyBest
+            manager.activityType = .fitness
+            manager.distanceFilter = 5
+            manager.pausesLocationUpdatesAutomatically = false
+        }
     }
 
     var isActive: Bool {
@@ -192,8 +196,7 @@ final class WorkoutRecorder: ObservableObject {
 
     private func beginUpdates() {
         // Blijft de route volgen als het scherm uit gaat (vereist de achtergrondmodus `location`).
-        // Demo-modus: alleen op de voorgrond. Met een achtergrondsessie geeft locationd in de
-        // simulator na de eerste positie niets meer door.
+        // In de demo-modus blijft de app op de voorgrond en is dat niet nodig.
         if !DemoMode.isActive {
             manager.allowsBackgroundLocationUpdates = true
             manager.showsBackgroundLocationIndicator = true

@@ -91,6 +91,10 @@ jobs:
           done
           echo "GET /api/v1/me zonder token: $CODE"
           [ "$CODE" = "401" ]
+          # De simulator en de schermopname vragen veel van de paar processorkernen van de runner;
+          # geef de server en de database voorrang, anders duurt inloggen soms tientallen seconden.
+          PIDS=$(pgrep -f "next-server|next start|postgres" | tr '\n' ' ' || true)
+          [ -z "$PIDS" ] || sudo -n renice -n -10 -p $PIDS > /dev/null 2>&1 || echo "Voorrang geven lukte niet."
           curl -s -o /dev/null -w 'POST /api/v1/auth/login als sanne: %{http_code} in %{time_total} s\n' \
             -H 'Content-Type: application/json' \
             -d '{"email":"sanne@metric.test","password":"metric-demo"}' \
@@ -133,11 +137,11 @@ jobs:
           UDID="$IPHONE_UDID"
           APP=DerivedData/Build/Products/Debug-iphonesimulator/Metric.app
           BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP/Info.plist")
-          # Locatietoegang vooraf verlenen; de test zelf verplaatst de simulator tijdens de opname
-          # (een scenario van `simctl location start` kwam tijdens de test niet bij de app aan).
+          # Locatietoegang vooraf verlenen. Tijdens de opname van de workout loopt de simulator dit
+          # pad langs de noordkant van het Vondelpark af (zie record.sh).
           xcrun simctl install "$UDID" "$APP" || true
           xcrun simctl privacy "$UDID" grant location "$BUNDLE_ID" || echo "Locatietoegang vooraf verlenen lukte niet."
-          export DEMO_LOCATION_ROUTE="52.360987,4.880004 52.3603,4.8770 52.3597,4.8735 52.3590,4.8700 52.3583,4.8665 52.3575,4.8630"
+          export DEMO_LOCATION_ROUTE="52.3611,4.8805 52.3603,4.8770 52.3597,4.8735 52.3590,4.8700 52.3583,4.8665 52.3575,4.8630"
           scripts/demo-video/record.sh iphone MetricUITests "iOS Simulator" "$UDID" Metric
 
       - name: iPhone-simulator afsluiten

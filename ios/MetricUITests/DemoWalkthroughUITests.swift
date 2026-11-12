@@ -28,8 +28,16 @@ final class DemoWalkthroughUITests: XCTestCase {
 
     func testWalkthrough() throws {
         started = Date()
-        // Zet de simulator alvast in het Vondelpark; tijdens de opname loopt de test het pad af.
-        XCUIDevice.shared.location = XCUILocation(location: location(alongRouteAt: 0))
+        // Zet de simulator alvast bij de ingang van het Vondelpark, waar het pad van de opname begint.
+        XCUIDevice.shared.location = XCUILocation(
+            location: CLLocation(
+                coordinate: CLLocationCoordinate2D(latitude: 52.3611, longitude: 4.8805),
+                altitude: 1,
+                horizontalAccuracy: 5,
+                verticalAccuracy: 5,
+                timestamp: Date()
+            )
+        )
         app.launch()
         mark("gestart")
 
@@ -174,25 +182,16 @@ final class DemoWalkthroughUITests: XCTestCase {
         let stop = app.buttons["record-stop"]
         XCTAssertTrue(stop.waitForExistence(timeout: 20), "De opname start niet")
         mark("opname")
-        runStart = Date()
-        updateLocation()
         // Is de locatietoegang niet vooraf verleend, dan vraagt iOS er nu om.
         if springboard.alerts.firstMatch.exists {
             tapIfPresent(["Allow While Using App", "Sta toe bij gebruik van app", "Bij gebruik van app"], in: [springboard])
         }
-        // Proef: eerst negen seconden lang elke seconde een nieuwe positie vanuit de test, daarna
-        // neemt een doorlopend scenario van `simctl location` het over (via een signaalbestand).
-        while Date().timeIntervalSince(runStart ?? Date()) < 9 {
-            updateLocation()
-            pause(1)
-        }
+        // Hardlopen: de workflow laat de simulator nu een pad door het Vondelpark aflopen
+        // (`simctl location start`), gestart door dit signaalbestand. Zonder workflow staat de loper stil.
         if let directory = ProcessInfo.processInfo.environment["DEMO_SIGNAL_DIR"] {
-            let created = FileManager.default.createFile(atPath: directory + "/location-scenario", contents: Data())
-            print("DEMO-SIGNAL location-scenario \(created ? "geschreven" : "mislukt") in \(directory)")
-        } else {
-            print("DEMO-SIGNAL geen DEMO_SIGNAL_DIR")
+            FileManager.default.createFile(atPath: directory + "/location-scenario", contents: Data())
         }
-        pause(9)
+        pause(16)
 
         stop.tap()
         let save = app.buttons["Bewaar workout"]
@@ -253,54 +252,6 @@ final class DemoWalkthroughUITests: XCTestCase {
             thenDragTo: end,
             withVelocity: XCUIGestureVelocity(rawValue: velocity),
             thenHoldForDuration: 0.15
-        )
-    }
-
-    // MARK: Locatie
-
-    /// Het pad dat de test tijdens de opname "loopt": de noordkant van het Vondelpark, naar het westen.
-    private let route: [CLLocationCoordinate2D] = [
-        CLLocationCoordinate2D(latitude: 52.3611, longitude: 4.8805),
-        CLLocationCoordinate2D(latitude: 52.3603, longitude: 4.8770),
-        CLLocationCoordinate2D(latitude: 52.3597, longitude: 4.8735),
-        CLLocationCoordinate2D(latitude: 52.3590, longitude: 4.8700),
-        CLLocationCoordinate2D(latitude: 52.3583, longitude: 4.8665),
-        CLLocationCoordinate2D(latitude: 52.3575, longitude: 4.8630),
-    ]
-    private let runningSpeed = 4.0 // m/s, ruim 4 minuten per kilometer
-    private var runStart: Date?
-
-    /// Zet de gesimuleerde positie op de plek waar de loper nu is.
-    private func updateLocation() {
-        let seconds = runStart.map { Date().timeIntervalSince($0) } ?? 0
-        XCUIDevice.shared.location = XCUILocation(location: location(alongRouteAt: seconds * runningSpeed))
-    }
-
-    private func location(alongRouteAt meters: Double) -> CLLocation {
-        var remaining = max(meters, 0)
-        var coordinate = route[0]
-        for index in 1..<route.count {
-            let from = CLLocation(latitude: route[index - 1].latitude, longitude: route[index - 1].longitude)
-            let to = CLLocation(latitude: route[index].latitude, longitude: route[index].longitude)
-            let length = to.distance(from: from)
-            if remaining <= length || index == route.count - 1 {
-                let fraction = min(remaining / length, 1)
-                coordinate = CLLocationCoordinate2D(
-                    latitude: from.coordinate.latitude + (to.coordinate.latitude - from.coordinate.latitude) * fraction,
-                    longitude: from.coordinate.longitude + (to.coordinate.longitude - from.coordinate.longitude) * fraction
-                )
-                break
-            }
-            remaining -= length
-        }
-        return CLLocation(
-            coordinate: coordinate,
-            altitude: 1,
-            horizontalAccuracy: 5,
-            verticalAccuracy: 5,
-            course: 250,
-            speed: runningSpeed,
-            timestamp: Date()
         )
     }
 
