@@ -33,14 +33,14 @@ Fouten hebben altijd deze vorm:
 ### UserSummary
 
 ```json
-{ "id": "…", "username": "wietse", "displayName": "Wietse" }
+{ "id": "…", "username": "sam", "displayName": "Sam" }
 ```
 
 ### Me (UserSummary +)
 
 ```json
 {
-  "id": "…", "username": "wietse", "displayName": "Wietse",
+  "id": "…", "username": "sam", "displayName": "Sam",
   "email": "…", "bio": "", "weeklyGoalMinutes": 150,
   "defaultVisibility": "friends", "createdAt": "…"
 }
@@ -52,7 +52,7 @@ Fouten hebben altijd deze vorm:
 {
   "id": "…",
   "clientId": "…",
-  "user": { "id": "…", "username": "wietse", "displayName": "Wietse" },
+  "user": { "id": "…", "username": "sam", "displayName": "Sam" },
   "type": "run",
   "title": "Ochtendrun",
   "notes": "",

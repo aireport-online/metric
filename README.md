@@ -1,5 +1,11 @@
 # Metric
 
+## Over deze publicatie
+
+Deze broncode is gedeeld bij de AI Report-masterclass over software bouwen met AI.
+Je kunt het project bestuderen, zelf draaien, forken en aanpassen onder de [MIT-licentie](LICENSE).
+Dit is een voorbeeldproject uit de masterclass; er wordt geen gehoste dienst of doorlopend onderhoud aangeboden.
+
 Houd je sportactiviteiten bij op je iPhone en Apple Watch, en deel je voortgang met vrienden via de website.
 
 | Onderdeel | Map | Wat het doet |

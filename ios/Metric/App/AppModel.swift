@@ -82,7 +82,7 @@ final class AppModel: ObservableObject {
         return true
     }
 
-    /// Een link naar de website, bv. `/u/wietse` of `/activities/<id>`.
+    /// Een link naar de website, bv. `/u/sam` of `/activities/<id>`.
     func webURL(_ path: String) -> URL? {
         URL(string: serverURLString + path)
     }

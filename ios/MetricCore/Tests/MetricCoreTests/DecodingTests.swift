@@ -6,7 +6,7 @@ final class DecodingTests: XCTestCase {
     {
       "id": "3f1c2a52-6a57-4c53-8a59-0d9d1d4a8f10",
       "clientId": "9b2e7c1e-0f5d-4b62-9a53-6f0a1f0b7c11",
-      "user": { "id": "u1", "username": "wietse", "displayName": "Wietse" },
+      "user": { "id": "u1", "username": "sam", "displayName": "Sam" },
       "type": "run",
       "title": "Ochtendrun",
       "notes": "",
@@ -32,7 +32,7 @@ final class DecodingTests: XCTestCase {
         let activity = try MetricCoding.decoder().decode(Activity.self, from: Data(activityJSON.utf8))
         XCTAssertEqual(activity.type, .run)
         XCTAssertEqual(activity.title, "Ochtendrun")
-        XCTAssertEqual(activity.user.username, "wietse")
+        XCTAssertEqual(activity.user.username, "sam")
         XCTAssertEqual(activity.durationSeconds, 1820)
         XCTAssertEqual(activity.distanceMeters ?? 0, 5230.4, accuracy: 0.001)
         XCTAssertEqual(activity.source, .watch)
@@ -48,7 +48,7 @@ final class DecodingTests: XCTestCase {
         let json = """
         {
           "id": "a", "clientId": "b",
-          "user": { "id": "u1", "username": "wietse", "displayName": "Wietse" },
+          "user": { "id": "u1", "username": "sam", "displayName": "Sam" },
           "type": "kitesurfen",
           "title": "Sessie", "notes": "",
           "startedAt": "2026-11-11T07:30:00Z",
@@ -185,7 +185,7 @@ final class DecodingTests: XCTestCase {
         XCTAssertEqual(workout.clientId, workout.clientId.lowercased())
 
         let context = WatchContextPayload(
-            isLoggedIn: true, displayName: "Wietse", weekMinutes: 90, goalMinutes: 150, streakWeeks: 4, updatedAt: startedAt
+            isLoggedIn: true, displayName: "Sam", weekMinutes: 90, goalMinutes: 150, streakWeeks: 4, updatedAt: startedAt
         )
         let decodedContext = try XCTUnwrap(WatchContextPayload(applicationContext: context.applicationContext()))
         XCTAssertEqual(decodedContext, context)
