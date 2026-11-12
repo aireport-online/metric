@@ -4,9 +4,10 @@
 #
 # Gebruik: record.sh <naam> <scheme> <platform> <udid> <procesnaam>   (vanuit ios/, met OUT gezet)
 #
-# Met DEMO_DIAGNOSE=1 komt er extra materiaal om haperingen te onderzoeken: van de iPhone-app
-# doorlopend `sample`-rapporten (waar de main thread tijd aan besteedt), van de Watch elke 2 s een
-# schermafbeelding. Dat vertraagt de app iets; gebruik het niet voor de uiteindelijke video.
+# Met DEMO_DIAGNOSE=1 komt er extra materiaal om haperingen te onderzoeken: van de iPhone-app een
+# `sample`-rapport over de hele test (waar de main thread tijd aan besteedt) en het logboek van
+# locationd, van de Watch elke 2 s een schermafbeelding. Dat vertraagt de app iets; gebruik het
+# niet voor de uiteindelijke video.
 set -u
 NAME="$1"; SCHEME="$2"; PLATFORM="$3"; UDID="$4"; PROCESS="$5"
 LOGS="$OUT/logs"
@@ -54,27 +55,27 @@ if [ "${DEMO_DIAGNOSE:-0}" = "1" ] && [ "$PLATFORM" = "watchOS Simulator" ]; the
 fi
 if [ "${DEMO_DIAGNOSE:-0}" = "1" ] && [ "$PLATFORM" = "iOS Simulator" ]; then
   mkdir -p "$OUT/$NAME-samples"
-  # Twee lussen die elkaar overlappen, zodat er geen gaten vallen terwijl een rapport wordt geschreven.
-  for OFFSET in 0 4; do
-    (
-      sleep "$OFFSET"
-      while kill -0 "$XB" 2> /dev/null; do
-        PID=$(pgrep -x "$PROCESS" | head -n 1)
-        if [ -n "$PID" ]; then
-          sample "$PID" 8 5 -mayDie -file "$OUT/$NAME-samples/$(date +%H%M%S)-$OFFSET.txt" || sleep 1
-        else
-          sleep 1
-        fi
-      done
-    ) > "$LOGS/$NAME-sample-$OFFSET.log" 2>&1 &
-  done
+  # Eén rapport over de hele test: wacht tot de app draait en bemonster hem dan tot hij stopt.
+  (
+    while kill -0 "$XB" 2> /dev/null; do
+      PID=$(pgrep -x "$PROCESS" | head -n 1)
+      if [ -n "$PID" ]; then
+        sample "$PID" "$TIMEOUT" 10 -mayDie -file "$OUT/$NAME-samples/$(date +%H%M%S).txt"
+      fi
+      sleep 1
+    done
+  ) > "$LOGS/$NAME-sample.log" 2>&1 &
+  # Wat locationd met de gesimuleerde posities doet.
+  xcrun simctl spawn "$UDID" log stream --style compact --level default \
+    --predicate 'process == "locationd"' > "$LOGS/$NAME-locationd.log" 2>&1 &
+  LOCLOG=$!
 fi
 
 wait "$XB"
 STATUS=$?
 pkill -P "$WD" > /dev/null 2>&1
 kill "$WD" > /dev/null 2>&1
-kill "$APPLOG" > /dev/null 2>&1
+kill "$APPLOG" ${LOCLOG:-} > /dev/null 2>&1
 
 sleep 1
 xcrun simctl io "$UDID" screenshot "$OUT/$NAME-end.png" > /dev/null 2>&1 || true

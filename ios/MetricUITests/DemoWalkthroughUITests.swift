@@ -178,10 +178,11 @@ final class DemoWalkthroughUITests: XCTestCase {
         if springboard.alerts.firstMatch.exists {
             tapIfPresent(["Allow While Using App", "Sta toe bij gebruik van app", "Bij gebruik van app"], in: [springboard])
         }
-        // Zestien seconden hardlopen: elke seconde een nieuwe positie.
-        while Date().timeIntervalSince(runStart ?? Date()) < 16 {
+        // Achttien seconden hardlopen. Proef: eerst elke seconde een nieuwe positie (stappen van
+        // 3,6 m, kleiner dan het afstandsfilter van 5 m), daarna om de twee seconden (7,2 m).
+        while Date().timeIntervalSince(runStart ?? Date()) < 18 {
             updateLocation()
-            pause(1)
+            pause(Date().timeIntervalSince(runStart ?? Date()) < 4 ? 1 : 2)
         }
 
         stop.tap()

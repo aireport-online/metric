@@ -43,7 +43,7 @@ final class WatchDemoUITests: XCTestCase {
         mark("gestart")
         XCTAssertTrue(start.waitForExistence(timeout: 60), "Het startscherm verschijnt niet")
         mark("startscherm")
-        pause(3)
+        pause(2.5)
         start.tap()
 
         // Sport kiezen, daarna telt het startschot af.
@@ -58,9 +58,9 @@ final class WatchDemoUITests: XCTestCase {
         let liveState = app.staticTexts["watch-live-state"]
         XCTAssertTrue(liveState.waitForExistence(timeout: 20), "De workout start niet")
         mark("live")
-        // Twaalf seconden workout. Een veeg omhoog doet op dit scherm niets, maar houdt het scherm wakker.
+        // Ruim tien seconden workout. Een veeg omhoog doet op dit scherm niets, maar houdt het scherm wakker.
         for _ in 0..<3 {
-            pause(3.5)
+            pause(3)
             app.swipeUp()
         }
 
@@ -76,7 +76,7 @@ final class WatchDemoUITests: XCTestCase {
         mark("hervat")
         pause(1.2)
         app.swipeLeft()
-        pause(3.5)
+        pause(2.5)
 
         // Stoppen en de samenvatting.
         let stop = app.buttons["watch-stop"]
@@ -88,9 +88,9 @@ final class WatchDemoUITests: XCTestCase {
         let done = app.buttons["watch-done"]
         XCTAssertTrue(done.waitForExistence(timeout: 20), "De samenvatting verschijnt niet")
         mark("samenvatting")
-        pause(3)
-        app.swipeUp()
         pause(2.5)
+        app.swipeUp()
+        pause(2)
         done.tap()
 
         XCTAssertTrue(start.waitForExistence(timeout: 20), "Na 'Klaar' komt het startscherm niet terug")
