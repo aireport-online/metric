@@ -7,10 +7,11 @@ import Foundation
 ///
 /// - iPhone: de app begint leeg op het inlogscherm (sessie, instellingen en lokale activiteiten
 ///   worden bij het starten gewist) en vraagt geen toegang tot Gezondheid en bewaart er niets in.
-///   Bij het opnemen gebruikt de app een eenvoudige locatiesessie op de voorgrond (zonder
-///   fitness-afstelling, afstandsfilter en achtergrondsessie), omdat de simulator anders alleen
-///   de eerste positie doorgeeft. Inloggen, synchroniseren, de feed, kudos en opnemen met GPS
-///   lopen verder via de gewone code.
+///   Bij het opnemen gebruikt de app een eenvoudige locatiesessie op de voorgrond (grove
+///   nauwkeurigheid, zonder fitness-afstelling, afstandsfilter en achtergrondsessie), omdat de
+///   simulator anders alleen de eerste positie van een gesimuleerde route doorgeeft. Inloggen,
+///   synchroniseren, de feed, kudos en het opnemen zelf (tijd, afstand, tempo, route) lopen via
+///   de gewone code.
 /// - Watch: geen HealthKit en geen WatchConnectivity. De workout loopt op een timer met
 ///   voorbeeldwaarden en het startscherm toont een voorbeeldweek, omdat de Watch zijn
 ///   voortgang normaal van de iPhone krijgt.

@@ -56,9 +56,9 @@ final class WorkoutRecorder: ObservableObject {
         }
         manager.delegate = locationDelegate
         if DemoMode.isActive {
-            // Demo-modus: een eenvoudige sessie op de voorgrond met grove nauwkeurigheid. Vraagt
-            // de app om GPS-nauwkeurigheid, dan geeft de simulator na de eerste positie geen
-            // gesimuleerde verplaatsing meer door (ook niet aan andere apps).
+            // Demo-modus: een eenvoudige sessie op de voorgrond met grove nauwkeurigheid. Met de
+            // afstelling voor een echt toestel hieronder gaf de simulator alleen de eerste positie
+            // van een gesimuleerde route door; zo komt elke seconde een positie binnen.
             manager.desiredAccuracy = kCLLocationAccuracyThreeKilometers
         } else {
             manager.desiredAccuracy = kCLLocationAccuracyBest

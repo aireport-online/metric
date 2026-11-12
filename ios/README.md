@@ -9,7 +9,10 @@ ios/
 ├── MetricCore/          Swift package: API-client, modellen, formatters, statistiek (+ tests)
 ├── Shared/              Code die in beide apps zit (ring, HealthKit-mapping)
 ├── Metric/              iPhone-app
-└── MetricWatch/         Watch-app
+├── MetricWatch/         Watch-app
+├── MetricUITests/       UI-test die de iPhone-app doorloopt (demovideo)
+├── MetricWatchUITests/  UI-test die de Watch-app doorloopt (demovideo)
+└── scripts/demo-video/  Hulpscripts van de workflow die de demovideo opneemt
 ```
 
 ## Vereisten
@@ -100,8 +103,13 @@ De GitHub Actions-workflow `.github/workflows/ios.yml` draait deze tests en bouw
 met route, de feed met kudos, de ranglijst, een workout opnemen en het profiel; op de Watch een workout van
 start tot samenvatting. De workflow `.github/workflows/demo-video.yml` (handmatig te starten) zet een lokale
 server met demo-gegevens klaar, neemt het scherm op terwijl de tests draaien en levert de video's af als
-artifact en op de branch `ci/demo-video`. De hulpscripts staan in `scripts/demo-video/`.
+artifact en op de branch `ci/demo-video`. De hulpscripts staan in `scripts/demo-video/`; tijdens de iPhone-test
+laat `simctl location` de simulator een rondje door het Vondelpark lopen, zodat de opname afstand en tempo toont.
 
 De tests starten de apps met het argument `-UITestDemo` (zie `Shared/DemoMode.swift`). Daarmee begint de
-iPhone-app leeg op het inlogscherm en blijft Gezondheid buiten beeld; de Watch-app draait de workout op een
-timer met voorbeeldwaarden. Zonder dat argument doet de demo-modus niets.
+iPhone-app leeg op het inlogscherm, blijft Gezondheid buiten beeld en gebruikt de opname een eenvoudige
+locatiesessie; de Watch-app draait de workout op een timer met voorbeeldwaarden. Zonder dat argument doet de
+demo-modus niets.
+
+Lokaal draaien kan ook: start de website met de demo-gegevens (`npm run db:seed`) op `http://localhost:3000`
+en voer het scheme `MetricUITests` of `MetricWatchUITests` uit op een simulator.
