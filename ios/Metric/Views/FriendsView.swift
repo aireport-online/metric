@@ -269,6 +269,7 @@ struct FeedRow: View {
             HStack(spacing: 10) {
                 if let onKudos {
                     KudosButton(count: activity.kudosCount, hasKudoed: activity.hasKudoed, action: onKudos)
+                        .accessibilityIdentifier("feed-kudos-\(activity.user.username)")
                 } else {
                     Label("\(activity.kudosCount)", systemImage: "hand.thumbsup")
                         .foregroundStyle(Theme.textMuted)

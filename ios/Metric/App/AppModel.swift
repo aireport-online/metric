@@ -215,7 +215,8 @@ final class AppModel: ObservableObject {
 
     /// Vraagt toegang tot Gezondheid en importeert daarna de workouts.
     func enableHealth() async {
-        guard health.isAvailable else { return }
+        // Demo-modus: geen toestemmingsvenster van Gezondheid tijdens de opname.
+        guard health.isAvailable, !DemoMode.isActive else { return }
         do {
             try await health.requestAuthorization()
             health.isEnabled = true
@@ -233,7 +234,7 @@ final class AppModel: ObservableObject {
     }
 
     private func importHealthWorkouts() async {
-        guard me != nil, health.isAvailable, health.isEnabled, !isImportingHealth else { return }
+        guard me != nil, health.isAvailable, health.isEnabled, !isImportingHealth, !DemoMode.isActive else { return }
         isImportingHealth = true
         defer { isImportingHealth = false }
 
@@ -340,7 +341,7 @@ final class AppModel: ObservableObject {
         context.insert(record)
         sync.save()
 
-        if health.isEnabled {
+        if health.isEnabled, !DemoMode.isActive {
             let healthId = try? await health.saveWorkout(
                 clientId: workout.clientId,
                 type: workout.type,

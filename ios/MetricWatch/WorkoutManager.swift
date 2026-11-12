@@ -25,11 +25,27 @@ final class WorkoutManager: NSObject, ObservableObject {
     @Published var summary: WatchWorkoutPayload?
     @Published var errorMessage: String?
 
+    // Demo-modus (`-UITestDemo`): toestand van de gesimuleerde workout.
+    private var demoTimer: Timer?
+    private var demoAccumulated: TimeInterval = 0
+    private var demoSegmentStart: Date?
+    private var demoHeartRateSum: Double = 0
+    private var demoHeartRateCount: Double = 0
+
     private static let quantityIdentifiers: [HKQuantityTypeIdentifier] = [
         .heartRate, .activeEnergyBurned, .distanceWalkingRunning, .distanceCycling, .distanceSwimming,
     ]
 
+    /// Verstreken tijd van de lopende workout (zonder pauzes).
+    var elapsedTime: TimeInterval {
+        if DemoMode.isActive {
+            return demoAccumulated + (demoSegmentStart.map { Date().timeIntervalSince($0) } ?? 0)
+        }
+        return builder?.elapsedTime ?? 0
+    }
+
     func requestAuthorization() {
+        guard !DemoMode.isActive else { return }
         guard HKHealthStore.isHealthDataAvailable() else { return }
         var share: Set<HKSampleType> = [HKObjectType.workoutType()]
         var read: Set<HKObjectType> = [HKObjectType.workoutType()]
@@ -45,6 +61,10 @@ final class WorkoutManager: NSObject, ObservableObject {
 
     func start(_ type: ActivityType) {
         guard activeType == nil else { return }
+        if DemoMode.isActive {
+            startDemo(type)
+            return
+        }
 
         let configuration = HKWorkoutConfiguration()
         configuration.activityType = type.healthKitType
@@ -88,6 +108,10 @@ final class WorkoutManager: NSObject, ObservableObject {
     }
 
     func togglePause() {
+        if DemoMode.isActive {
+            toggleDemoPause()
+            return
+        }
         if isRunning {
             session?.pause()
         } else {
@@ -98,6 +122,10 @@ final class WorkoutManager: NSObject, ObservableObject {
     func end() {
         guard activeType != nil, !isEnding else { return }
         isEnding = true
+        if DemoMode.isActive {
+            endDemo()
+            return
+        }
         session?.end()
     }
 
@@ -128,7 +156,7 @@ final class WorkoutManager: NSObject, ObservableObject {
     /// Rondt af op de main thread: bouwt de samenvatting en stuurt hem naar de iPhone.
     private func finish(workout: HKWorkout?, endDate: Date) {
         guard let type = activeType else { return }
-        let elapsed = builder?.elapsedTime ?? 0
+        let elapsed = elapsedTime
         let duration = workout?.duration ?? (elapsed > 0 ? elapsed : endDate.timeIntervalSince(startDate))
         let payload = WatchWorkoutPayload(
             clientId: clientId,
@@ -144,7 +172,9 @@ final class WorkoutManager: NSObject, ObservableObject {
 
         // Workouts van een paar seconden (per ongeluk gestart) sturen we niet door.
         if duration >= 10 {
-            WatchConnectivityManager.shared.send(workout: payload)
+            if !DemoMode.isActive {
+                WatchConnectivityManager.shared.send(workout: payload)
+            }
             summary = payload
         }
 
@@ -153,6 +183,81 @@ final class WorkoutManager: NSObject, ObservableObject {
         activeType = nil
         isRunning = false
         isEnding = false
+    }
+}
+
+// MARK: - Demo-modus
+
+/// Alleen met het startargument `-UITestDemo` (zie `DemoMode`): de workout loopt op een timer met
+/// voorbeeldwaarden, zonder HealthKit. Er wordt niets bewaard of naar de iPhone gestuurd.
+extension WorkoutManager {
+    private func startDemo(_ type: ActivityType) {
+        clientId = ClientID.new()
+        startDate = Date()
+        resetMetrics()
+        demoHeartRateSum = 0
+        demoHeartRateCount = 0
+        demoAccumulated = 0
+        demoSegmentStart = startDate
+        summary = nil
+        errorMessage = nil
+        isEnding = false
+        isRunning = true
+        activeType = type
+
+        let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
+            self?.tickDemo()
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        demoTimer = timer
+        tickDemo()
+    }
+
+    private func tickDemo() {
+        guard isRunning, let type = activeType else { return }
+        let seconds = elapsedTime
+        // Hartslag loopt op tijdens de eerste minuut, met een lichte golf.
+        heartRate = 126 + min(seconds, 60) * 0.5 + 4 * sin(seconds / 3)
+        demoHeartRateSum += heartRate
+        demoHeartRateCount += 1
+        averageHeartRate = demoHeartRateSum / demoHeartRateCount
+        maxHeartRate = max(maxHeartRate, heartRate)
+        activeEnergy = seconds * 0.17
+        if type.isDistanceBased {
+            let metersPerSecond: Double
+            switch type {
+            case .ride: metersPerSecond = 7.2
+            case .swim: metersPerSecond = 0.9
+            case .walk, .hike: metersPerSecond = 1.5
+            default: metersPerSecond = 3.1
+            }
+            distance = seconds * metersPerSecond
+        }
+    }
+
+    private func toggleDemoPause() {
+        if isRunning {
+            demoAccumulated = elapsedTime
+            demoSegmentStart = nil
+            isRunning = false
+        } else {
+            demoSegmentStart = Date()
+            isRunning = true
+        }
+    }
+
+    private func endDemo() {
+        if isRunning {
+            tickDemo()
+        }
+        demoAccumulated = elapsedTime
+        demoSegmentStart = nil
+        demoTimer?.invalidate()
+        demoTimer = nil
+        // Kort het "Workout opslaan…"-scherm laten zien, zoals bij een echte workout.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            self.finish(workout: nil, endDate: Date())
+        }
     }
 }
 

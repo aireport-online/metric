@@ -1,0 +1,76 @@
+#!/bin/bash
+# Neemt het scherm van een simulator op terwijl een UI-testscheme draait (test-without-building).
+# De opname wordt ook bij een mislukte test netjes afgesloten, zodat de video bruikbaar is.
+#
+# Gebruik: record.sh <naam> <scheme> <platform> <udid>     (vanuit ios/, met OUT gezet)
+set -u
+NAME="$1"; SCHEME="$2"; PLATFORM="$3"; UDID="$4"
+LOGS="$OUT/logs"
+VIDEO="$OUT/$NAME-raw.mp4"
+TESTLOG="$LOGS/$NAME-test.log"
+RESULT="${RUNNER_TEMP:-/tmp}/$NAME.xcresult"
+TIMEOUT="${TEST_TIMEOUT:-540}"
+mkdir -p "$LOGS"
+rm -rf "$RESULT"
+
+xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$VIDEO" > "$LOGS/$NAME-record.log" 2>&1 &
+REC=$!
+for _ in $(seq 1 40); do
+  grep -q "Recording started" "$LOGS/$NAME-record.log" && break
+  sleep 0.5
+done
+date +%s > "$OUT/$NAME-recording-start.txt"
+
+xcodebuild test-without-building \
+  -project Metric.xcodeproj \
+  -scheme "$SCHEME" \
+  -destination "platform=$PLATFORM,id=$UDID" \
+  -derivedDataPath DerivedData \
+  -parallel-testing-enabled NO \
+  -resultBundlePath "$RESULT" \
+  > "$TESTLOG" 2>&1 &
+XB=$!
+# Waakhond: breek een vastgelopen test af, zodat de opname nog kan worden afgesloten.
+( sleep "$TIMEOUT"; echo "WATCHDOG: test afgebroken na $TIMEOUT s" >> "$TESTLOG"; kill -TERM "$XB" ) > /dev/null 2>&1 &
+WD=$!
+wait "$XB"
+STATUS=$?
+pkill -P "$WD" > /dev/null 2>&1
+kill "$WD" > /dev/null 2>&1
+
+sleep 1
+xcrun simctl io "$UDID" screenshot "$OUT/$NAME-end.png" > /dev/null 2>&1 || true
+
+kill -INT "$REC"
+for _ in $(seq 1 80); do
+  kill -0 "$REC" 2> /dev/null || break
+  sleep 0.5
+done
+if kill -0 "$REC" 2> /dev/null; then
+  echo "De opname stopt niet na SIGINT; SIGTERM."
+  kill -TERM "$REC"
+  sleep 2
+fi
+ls -l "$VIDEO" || true
+
+grep "DEMO-MARK" "$TESTLOG" > "$OUT/$NAME-marks.txt" || true
+sed -n '/DEMO-HIERARCHY-BEGIN/,/DEMO-HIERARCHY-END/p' "$TESTLOG" > "$OUT/$NAME-hierarchy.txt"
+[ -s "$OUT/$NAME-hierarchy.txt" ] || rm -f "$OUT/$NAME-hierarchy.txt"
+if [ "$STATUS" -ne 0 ]; then
+  # Schermafbeeldingen die de test bij een fout als bijlage bewaart.
+  xcrun xcresulttool export attachments --path "$RESULT" --output-path "$OUT/$NAME-attachments" > /dev/null 2>&1 || true
+fi
+
+{
+  echo "== $NAME: test, exit $STATUS"
+  grep -E "(Test Case .*(passed|failed)|error:|XCTAssert|Assertion Failure|Failed to|Testing failed|TEST EXECUTE (SUCCEEDED|FAILED)|Executed [0-9]+ test|WATCHDOG|Unable to find a destination|Terminating app due to|Crash)" "$TESTLOG" \
+    | awk '!seen[$0]++' | head -n 60
+  echo "-- markeringen"
+  sed -E 's/ epoch=.*//' "$OUT/$NAME-marks.txt" 2> /dev/null | tr '\n' ';'
+  echo
+} | tee "$OUT/$NAME-test-summary.txt"
+if [ "$STATUS" -ne 0 ]; then
+  echo "-- laatste regels van het testlog"
+  sed '/DEMO-HIERARCHY-BEGIN/,/DEMO-HIERARCHY-END/d' "$TESTLOG" | tail -n 30
+fi
+exit "$STATUS"

@@ -123,6 +123,39 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_PREVIEWS: YES
 
+  # UI-tests die de apps in de simulator bedienen voor de demovideo's
+  # (zie .github/workflows/demo-video.yml). Ze starten de apps met `-UITestDemo`.
+  MetricUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: MetricUITests
+    dependencies:
+      - target: Metric
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(METRIC_BUNDLE_ID).uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Metric
+        TARGETED_DEVICE_FAMILY: "1"
+
+  MetricWatchUITests:
+    type: bundle.ui-testing
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: MetricWatchUITests
+    dependencies:
+      - target: MetricWatch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(METRIC_BUNDLE_ID).watchkitapp.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: MetricWatch
+        SDKROOT: watchos
+        TARGETED_DEVICE_FAMILY: "4"
+
 schemes:
   Metric:
     build:
@@ -144,3 +177,27 @@ schemes:
       config: Debug
     archive:
       config: Release
+  MetricUITests:
+    build:
+      targets:
+        Metric: all
+        MetricUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - name: MetricUITests
+          parallelizable: false
+  MetricWatchUITests:
+    build:
+      targets:
+        MetricWatch: all
+        MetricWatchUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - name: MetricWatchUITests
+          parallelizable: false

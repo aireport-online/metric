@@ -76,6 +76,7 @@ struct HomeView: View {
                     Label("Start workout", systemImage: "play.fill")
                 }
                 .buttonStyle(PrimaryButtonStyle(compact: true))
+                .accessibilityIdentifier("watch-start")
 
                 if let errorMessage = workout.errorMessage {
                     Text(errorMessage)
@@ -119,6 +120,7 @@ struct SportPickerView: View {
                         .foregroundStyle(Theme.text)
                 }
             }
+            .accessibilityIdentifier("watch-sport-\(type.rawValue)")
             .listRowBackground(
                 RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous)
                     .fill(Theme.surface)
@@ -215,6 +217,7 @@ struct MetricsView: View {
                     Text(workout.isRunning ? "Live" : "Gepauzeerd")
                         .font(.metricLabel(13))
                         .foregroundStyle(workout.isRunning ? Theme.volt : Theme.textMuted)
+                        .accessibilityIdentifier("watch-live-state")
                     Spacer()
                     if let type = workout.activeType {
                         Image(systemName: type.symbolName)
@@ -224,7 +227,7 @@ struct MetricsView: View {
                     }
                 }
 
-                Text(Format.duration(workout.builder?.elapsedTime ?? 0))
+                Text(Format.duration(workout.elapsedTime))
                     .font(.metricNumber(44))
                     .monospacedDigit()
                     .foregroundStyle(workout.isRunning ? Theme.text : Theme.textMuted)
@@ -278,6 +281,7 @@ struct ControlsView: View {
                 }
                 .buttonStyle(PressableStyle())
                 .accessibilityLabel("Stop")
+                .accessibilityIdentifier("watch-stop")
                 Text("Stop")
                     .font(.metricText(12))
                     .foregroundStyle(Theme.textSecondary)
@@ -296,6 +300,7 @@ struct ControlsView: View {
                 }
                 .buttonStyle(PressableStyle())
                 .accessibilityLabel(workout.isRunning ? "Pauzeer" : "Hervat")
+                .accessibilityIdentifier("watch-pause-toggle")
                 Text(workout.isRunning ? "Pauze" : "Hervat")
                     .font(.metricText(12))
                     .foregroundStyle(Theme.textSecondary)
@@ -364,6 +369,7 @@ struct SummaryView: View {
                     workout.summary = nil
                 }
                 .buttonStyle(PrimaryButtonStyle(compact: true))
+                .accessibilityIdentifier("watch-done")
                 .padding(.top, 4)
             }
             .padding(.horizontal, 4)

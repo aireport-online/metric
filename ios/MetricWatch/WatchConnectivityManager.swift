@@ -11,6 +11,17 @@ final class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDeleg
     @Published private(set) var context: WatchContextPayload?
 
     func activate() {
+        if DemoMode.isActive {
+            // Demo-modus: een voorbeeldweek, want zonder gekoppelde iPhone komt er geen voortgang binnen.
+            context = WatchContextPayload(
+                isLoggedIn: true,
+                displayName: "Sanne",
+                weekMinutes: 126,
+                goalMinutes: 180,
+                streakWeeks: 5
+            )
+            return
+        }
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
         if session.delegate == nil {

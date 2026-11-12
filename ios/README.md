@@ -93,3 +93,15 @@ cd ios/MetricCore && swift test
 ```
 
 De GitHub Actions-workflow `.github/workflows/ios.yml` draait deze tests en bouwt beide apps voor de simulator.
+
+## Demovideo (UI-tests)
+
+`MetricUITests` en `MetricWatchUITests` lopen de apps in de simulator door: inloggen, de week, een activiteit
+met route, de feed met kudos, de ranglijst, een workout opnemen en het profiel; op de Watch een workout van
+start tot samenvatting. De workflow `.github/workflows/demo-video.yml` (handmatig te starten) zet een lokale
+server met demo-gegevens klaar, neemt het scherm op terwijl de tests draaien en levert de video's af als
+artifact en op de branch `ci/demo-video`. De hulpscripts staan in `scripts/demo-video/`.
+
+De tests starten de apps met het argument `-UITestDemo` (zie `Shared/DemoMode.swift`). Daarmee begint de
+iPhone-app leeg op het inlogscherm en blijft Gezondheid buiten beeld; de Watch-app draait de workout op een
+timer met voorbeeldwaarden. Zonder dat argument doet de demo-modus niets.

@@ -30,6 +30,7 @@ struct ActivitiesView: View {
                         } label: {
                             ActivityRecordRow(record: record)
                         }
+                        .accessibilityIdentifier("activity-row-\(record.type.rawValue)\(record.hasRoute ? "-route" : "")")
                         .entrance(index)
                         .cardRow()
                         .swipeActions(edge: .trailing) {

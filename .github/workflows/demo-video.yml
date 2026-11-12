@@ -1,0 +1,218 @@
+name: Demovideo
+
+# Neemt een schermvideo op van de iPhone- en de Watch-app in de simulator, bediend door de
+# UI-tests in ios/MetricUITests en ios/MetricWatchUITests. De iPhone-app praat daarbij met een
+# lokaal gestarte Metric-server met de demo-gegevens uit web/scripts/seed.ts.
+#
+# Uitvoer: het artifact "demo-video" en dezelfde bestanden op de losse branch `ci/demo-video`
+# (wordt bij elke run overschreven).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: demo-video
+  cancel-in-progress: true
+
+jobs:
+  record:
+    name: iPhone- en Watch-app opnemen in de simulator
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      DATABASE_URL: postgres://metric@localhost:5432/metric
+      APP_URL: http://localhost:3000
+      NEXT_TELEMETRY_DISABLED: "1"
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_INSTALL_CLEANUP: "1"
+      OUT: ${{ github.workspace }}/demo-output
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain en simulators
+        run: |
+          mkdir -p "$OUT/logs"
+          {
+            sw_vers
+            xcodebuild -version
+            echo "--- runtimes"
+            xcrun simctl list runtimes
+            echo "--- devicetypes"
+            xcrun simctl list devicetypes | grep -E "iPhone 1[5-9]|Apple Watch (Series (9|1[0-9])|Ultra)" || true
+          } | tee "$OUT/logs/toolchain.txt"
+
+      # --- Server -----------------------------------------------------------------------------
+
+      - name: Postgres starten
+        run: |
+          if ! command -v initdb > /dev/null 2>&1; then
+            FORMULA=$(brew list --formula 2> /dev/null | grep -E '^postgresql(@[0-9]+)?$' | sort -V | tail -n 1 || true)
+            if [ -z "$FORMULA" ]; then
+              FORMULA=postgresql@16
+              brew install "$FORMULA"
+            fi
+            PG_BIN="$(brew --prefix "$FORMULA")/bin"
+            export PATH="$PG_BIN:$PATH"
+            echo "$PG_BIN" >> "$GITHUB_PATH"
+          fi
+          initdb --version
+          PGDATA="$RUNNER_TEMP/pgdata"
+          initdb -D "$PGDATA" -U metric --auth=trust -E UTF8 --locale=C > "$OUT/logs/postgres-init.log"
+          pg_ctl -D "$PGDATA" -l "$OUT/logs/postgres.log" -o "-c listen_addresses=localhost -p 5432" -w start
+          createdb -h localhost -p 5432 -U metric metric
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Website bouwen, demo-gegevens laden en starten
+        working-directory: web
+        run: |
+          npm ci
+          npm run db:migrate
+          npm run db:seed
+          npm run build
+          nohup npm run start > "$OUT/logs/web.log" 2>&1 &
+          for _ in $(seq 1 60); do
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/api/v1/me || true)
+            [ "$CODE" = "401" ] && break
+            sleep 1
+          done
+          echo "GET /api/v1/me zonder token: $CODE"
+          [ "$CODE" = "401" ]
+          curl -s -o /dev/null -w 'POST /api/v1/auth/login als sanne: %{http_code}\n' \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"sanne@metric.test","password":"metric-demo"}' \
+            http://localhost:3000/api/v1/auth/login
+
+      # --- Xcode-project ----------------------------------------------------------------------
+
+      - name: Xcode-project genereren
+        id: project
+        working-directory: ios
+        run: |
+          brew list xcodegen > /dev/null 2>&1 || brew install xcodegen
+          xcodegen generate
+          defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false
+
+      # --- iPhone -----------------------------------------------------------------------------
+
+      - name: iPhone-simulator starten en app bouwen
+        id: iphone_build
+        working-directory: ios
+        timeout-minutes: 25
+        run: |
+          PICK=$(python3 scripts/demo-video/pick-simulator.py iOS "$(xcrun --sdk iphonesimulator --show-sdk-version)")
+          IFS=$'\t' read -r TYPE RUNTIME NAME <<< "$PICK"
+          echo "Simulator: $NAME ($RUNTIME)" | tee "$OUT/iphone-simulator.txt"
+          UDID=$(xcrun simctl create "Metric demo iPhone" "$TYPE" "$RUNTIME")
+          echo "IPHONE_UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl bootstatus "$UDID" -b
+          # Geen uitleg over veegtypen bij het eerste toetsenbord; een nette statusbalk.
+          xcrun simctl spawn "$UDID" defaults write com.apple.keyboard.preferences DidShowContinuousPathIntroduction -bool true || true
+          xcrun simctl status_bar "$UDID" override --time "$(TZ=Europe/Amsterdam date +%H:%M)" \
+            --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 --dataNetwork wifi || true
+          scripts/demo-video/build.sh iphone MetricUITests "iOS Simulator" "$UDID"
+
+      - name: iPhone-app opnemen
+        id: iphone_record
+        working-directory: ios
+        timeout-minutes: 15
+        run: |
+          UDID="$IPHONE_UDID"
+          APP=DerivedData/Build/Products/Debug-iphonesimulator/Metric.app
+          BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP/Info.plist")
+          # Locatietoegang vooraf verlenen en een rondje door het Vondelpark simuleren (3,6 m/s).
+          xcrun simctl install "$UDID" "$APP" || true
+          xcrun simctl privacy "$UDID" grant location "$BUNDLE_ID" || echo "Locatietoegang vooraf verlenen lukte niet."
+          xcrun simctl location "$UDID" start --speed=3.6 --interval=1 \
+            52.3611,4.8805 52.3603,4.8770 52.3597,4.8735 52.3590,4.8700 52.3583,4.8665 52.3575,4.8630 \
+            52.3566,4.8598 52.3557,4.8572 52.3549,4.8590 52.3555,4.8625 52.3562,4.8660 52.3569,4.8695 \
+            52.3577,4.8730 52.3585,4.8765 52.3594,4.8798 52.3611,4.8805 \
+            || xcrun simctl location "$UDID" set 52.3611,4.8805 \
+            || echo "Locatie simuleren lukte niet."
+          scripts/demo-video/record.sh iphone MetricUITests "iOS Simulator" "$UDID"
+
+      - name: iPhone-simulator afsluiten
+        if: ${{ !cancelled() && env.IPHONE_UDID != '' }}
+        run: xcrun simctl shutdown "$IPHONE_UDID" || true
+
+      # --- Apple Watch ------------------------------------------------------------------------
+
+      - name: Watch-simulator starten en app bouwen
+        id: watch_build
+        if: ${{ !cancelled() && steps.project.outcome == 'success' }}
+        working-directory: ios
+        timeout-minutes: 30
+        run: |
+          SDK=$(xcrun --sdk watchsimulator --show-sdk-version)
+          if ! PICK=$(python3 scripts/demo-video/pick-simulator.py watchOS "$SDK"); then
+            echo "Geen watchOS-simulator aanwezig; de runtime wordt gedownload."
+            xcodebuild -downloadPlatform watchOS
+            PICK=$(python3 scripts/demo-video/pick-simulator.py watchOS "$SDK")
+          fi
+          IFS=$'\t' read -r TYPE RUNTIME NAME <<< "$PICK"
+          echo "Simulator: $NAME ($RUNTIME)" | tee "$OUT/watch-simulator.txt"
+          UDID=$(xcrun simctl create "Metric demo Watch" "$TYPE" "$RUNTIME")
+          echo "WATCH_UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl bootstatus "$UDID" -b
+          scripts/demo-video/build.sh watch MetricWatchUITests "watchOS Simulator" "$UDID"
+
+      - name: Watch-app opnemen
+        id: watch_record
+        if: ${{ !cancelled() && steps.watch_build.outcome == 'success' }}
+        working-directory: ios
+        timeout-minutes: 15
+        run: scripts/demo-video/record.sh watch MetricWatchUITests "watchOS Simulator" "$WATCH_UDID"
+
+      # --- Uitvoer ----------------------------------------------------------------------------
+
+      - name: Artifact uploaden
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-video
+          path: demo-output
+          if-no-files-found: warn
+
+      - name: Uitvoer naar de branch ci/demo-video
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$OUT/logs"
+          cd "$OUT"
+          {
+            echo "run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo "commit: $GITHUB_SHA"
+            echo "datum: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > run.txt
+          # GitHub weigert bestanden vanaf 100 MB: splits grote video's (samenvoegen met `cat`).
+          for FILE in *.mp4; do
+            [ -f "$FILE" ] || continue
+            if [ "$(stat -f%z "$FILE")" -gt 95000000 ]; then
+              split -b 90m "$FILE" "$FILE.part-"
+              rm "$FILE"
+            fi
+          done
+          gzip -9 logs/*.log 2> /dev/null || true
+          git init -q
+          git checkout -q -b ci/demo-video
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Demo-opname van run $GITHUB_RUN_ID"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci/demo-video
+
+      - name: Samenvatting
+        if: always()
+        run: |
+          cd "$OUT"
+          ls -l
+          cat iphone-simulator.txt watch-simulator.txt 2> /dev/null || true
+          cat iphone-build-summary.txt iphone-test-summary.txt watch-build-summary.txt watch-test-summary.txt 2> /dev/null || true

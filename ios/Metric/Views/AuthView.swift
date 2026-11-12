@@ -53,9 +53,11 @@ struct AuthView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .metricField()
+                        .accessibilityIdentifier("auth-email")
                     SecureField("Wachtwoord", text: $password)
                         .textContentType(mode == .login ? .password : .newPassword)
                         .metricField()
+                        .accessibilityIdentifier("auth-password")
                     if mode == .register {
                         TextField("Gebruikersnaam", text: $username)
                             .textContentType(.username)
@@ -96,6 +98,7 @@ struct AuthView: View {
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .disabled(!isValid || isBusy)
+                .accessibilityIdentifier("auth-submit")
                 .entrance(3)
 
                 advanced

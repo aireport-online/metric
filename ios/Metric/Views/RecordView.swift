@@ -64,6 +64,7 @@ struct RecordView: View {
                         }
                         .buttonStyle(PressableStyle())
                         .accessibilityAddTraits(selectedType == type ? .isSelected : [])
+                        .accessibilityIdentifier("sport-\(type.rawValue)")
                     }
                 }
                 .animation(reduceMotion ? nil : Theme.Motion.kick, value: selectedType)
@@ -83,6 +84,7 @@ struct RecordView: View {
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .disabled(isSaving || countdown != nil)
+                .accessibilityIdentifier("record-start")
 
                 if isSaving {
                     HStack(spacing: 8) {
@@ -220,6 +222,7 @@ struct RecordView: View {
                 }
                 .buttonStyle(PressableStyle())
                 .accessibilityLabel("Stop")
+                .accessibilityIdentifier("record-stop")
 
                 Button {
                     if recorder.state == .paused {
@@ -368,6 +371,7 @@ struct FinishSummaryView: View {
                             onDone()
                         }
                         .buttonStyle(PrimaryButtonStyle())
+                        .accessibilityIdentifier("finish-done")
 
                         NavigationLink {
                             ActivityDetailView(record: record)
